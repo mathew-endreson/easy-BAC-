@@ -1,6 +1,9 @@
 node_modules
 .DS_Store
 .env
+.env.local
+*.local
 dist
+.vite
 verify_firebase.mjs
 package-lock.json

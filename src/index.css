@@ -1,0 +1,338 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply font-body text-ink bg-bg-page m-0;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  hr { border: none; height: 0.5px; background-color: #E2E8F0; }
+}
+
+@layer utilities {
+  .ez-container { @apply max-w-container mx-auto px-[26px]; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   GLOBAL TRANSITIONS — preserved from ux-enhancer.css
+   ────────────────────────────────────────────────────────────────── */
+* {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
+}
+
+/* Reveal-on-scroll classes used by JS observers */
+.reveal-up { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+.reveal-up.active { opacity: 1; transform: translateY(0); }
+
+/* Cinematic reveal + float */
+.reveal-cinematic { animation: slide-in-blurred 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.cinematic-float { animation: float 6s ease-in-out infinite; }
+.glow-btn { animation: glow-pulse 3s infinite; }
+
+@keyframes slide-in-blurred {
+  0% { transform: translateY(50px) scale(0.9); filter: blur(10px); opacity: 0; }
+  100% { transform: translateY(0) scale(1); filter: blur(0); opacity: 1; }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(1deg); }
+}
+@keyframes glow-pulse {
+  0%,100% { box-shadow: 0 0 5px rgba(187,24,29,0.2); }
+  50% { box-shadow: 0 0 20px rgba(187,24,29,0.6); }
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+}
+@keyframes pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shake-anim { animation: shake 0.4s ease; }
+.pop-anim { animation: pop 0.5s ease; }
+.fade-in-anim { animation: fade-in 0.4s ease; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Reactive buttons
+   ────────────────────────────────────────────────────────────────── */
+.btn-reactive {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.btn-reactive:hover { letter-spacing: 1px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+.btn-reactive:active { transform: scale(0.92) translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+
+/* ──────────────────────────────────────────────────────────────────
+   FAQ accordion (max-height + padding transition)
+   ────────────────────────────────────────────────────────────────── */
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease;
+  padding: 0 32px;
+  background: #fff;
+}
+.faq-item.active .faq-answer { max-height: 500px; padding: 16px 32px; }
+.faq-item.active .faq-icon { transform: rotate(45deg); }
+.faq-icon { transition: transform 0.3s ease; font-size: 20px; line-height: 1; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Hero play button — circle + triangle
+   ────────────────────────────────────────────────────────────────── */
+.play-icon {
+  width: 59px;
+  height: 59px;
+  background: black;
+  border-radius: 50%;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.play-icon::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-40%, -50%);
+  border-left: 15px solid white;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+  transition: 0.3s;
+}
+.btn-play:hover .play-icon { transform: scale(1.1); background: #AB1017; }
+.btn-play:hover .play-icon::before { transform: translate(-30%, -50%); }
+.btn-play:hover span { color: #AB1017; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Dashboard nav-item underline (::after) — preserved
+   ────────────────────────────────────────────────────────────────── */
+.dash-link { position: relative; transition: 0.3s; }
+.dash-link::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: #BB181D;
+  transition: 0.3s;
+}
+.dash-link:hover::after, .dash-link.active::after { width: 100%; }
+.dash-link:hover { color: #BB181D; }
+.dash-link.active { color: #BB181D; font-weight: 600; font-size: 1.1rem; }
+
+/* Footer link underline */
+.foot-link { position: relative; transition: 0.3s; }
+.foot-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0%;
+  height: 1px;
+  background: #fff;
+  transition: 0.3s;
+}
+.foot-link:hover::after { width: 100%; }
+.foot-link:hover { color: #fff; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Animate filter-btn img tint when active
+   ────────────────────────────────────────────────────────────────── */
+.filter-active-img {
+  filter: brightness(0) saturate(100%) invert(22%) sepia(97%) saturate(6565%) hue-rotate(346deg) brightness(92%) contrast(107%);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Quiz answer animations
+   ────────────────────────────────────────────────────────────────── */
+.answer.correct { background: #d1fae5 !important; transform: scale(1.03); box-shadow: 0 0 15px rgba(16,185,129,0.2); }
+.answer.wrong { background: #fee2e2 !important; animation: shake 0.4s ease; }
+.correct-feedback { animation: pop 0.4s ease; border: 2px solid #22c55e !important; }
+.wrong-feedback { animation: shake 0.4s ease; border: 2px solid #ef4444 !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Flashcard 3D flip
+   ────────────────────────────────────────────────────────────────── */
+.flash-card-outer { perspective: 1000px; width: 100%; height: 300px; cursor: pointer; margin-top: 40px; }
+.flash-card-inner {
+  position: relative; width: 100%; height: 100%; text-align: center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  border-radius: 30px;
+}
+.flash-card-outer.flipped .flash-card-inner { transform: rotateY(180deg); }
+.flash-front, .flash-back {
+  position: absolute; width: 100%; height: 100%;
+  backface-visibility: hidden;
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px; box-sizing: border-box; border-radius: 30px; background: white;
+}
+.flash-back { transform: rotateY(180deg); color: #BB181D; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Horizontal cards scroll
+   ────────────────────────────────────────────────────────────────── */
+.horizontal-courses { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; }
+.horizontal-courses > * { min-width: 250px; flex-shrink: 0; }
+.horizontal-courses::-webkit-scrollbar { height: 6px; }
+.horizontal-courses::-webkit-scrollbar-thumb { background: #f0ecec; border-radius: 10px; }
+
+/* Todo list scrollbar */
+.todo-list-scroll { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+.todo-list-scroll::-webkit-scrollbar { width: 4px; }
+.todo-list-scroll::-webkit-scrollbar-thumb { background: #DCDDE6; border-radius: 10px; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Video modal (used by Landing page hero "How it works")
+   ────────────────────────────────────────────────────────────────── */
+.video-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  justify-content: center; align-items: center;
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.video-modal.active { display: flex; opacity: 1; pointer-events: auto; }
+.video-modal .modal-content {
+  position: relative;
+  width: 90%; max-width: 1100px;
+  aspect-ratio: 16/9;
+  background: #000;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.7);
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.video-modal.active .modal-content { transform: scale(1) translateY(0); }
+.video-modal video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.video-modal .close-modal {
+  position: absolute; top: 24px; right: 24px;
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 24px; cursor: pointer; z-index: 10001;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.video-modal .close-modal:hover { background: #AB1017; border-color: #AB1017; transform: rotate(90deg); }
+
+/* About cards reveal */
+.about-card-reveal { opacity: 0; transform: translateY(40px); transition: all 0.6s ease; }
+.about-card-reveal.show { opacity: 1; transform: translateY(0); }
+.about-card-reveal:nth-child(1) { transition-delay: 0.1s; }
+.about-card-reveal:nth-child(2) { transition-delay: 0.2s; }
+.about-card-reveal:nth-child(3) { transition-delay: 0.3s; }
+.about-card-reveal:nth-child(4) { transition-delay: 0.4s; }
+
+/* RTL overrides */
+[dir="rtl"] { text-align: right; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Mobile bottom tab bar — dashboard navbar on small screens
+   ────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dashboard-navbar-bottom {
+    top: auto !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-bottom: none;
+    border-top: 1px solid #E2E8F0;
+    z-index: 1100;
+  }
+  .dashboard-navbar-bottom .dashboard-container {
+    padding: 6px 4px !important;
+    border-radius: 0 !important;
+    background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+  .dashboard-navbar-bottom .logo,
+  .dashboard-navbar-bottom .nav-right { display: none !important; }
+  .dashboard-navbar-bottom .dashboard-links {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    gap: 0;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+  .dashboard-navbar-bottom .dash-link {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px !important;
+    padding: 4px 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .dashboard-navbar-bottom .dash-link span {
+    display: block !important;
+    font-size: 10px !important;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .dashboard-navbar-bottom .dash-link img { width: 20px; height: 20px; }
+  .dashboard-navbar-bottom .dash-link::after { display: none; }
+  .dashboard-navbar-bottom .dash-link.active { font-size: 10px !important; color: #BB181D; }
+  body.has-bottom-tab { padding-bottom: 70px; }
+}
+
+/* iOS safe area for bottom tab */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 768px) {
+    .dashboard-navbar-bottom .dashboard-container {
+      padding-bottom: calc(6px + env(safe-area-inset-bottom)) !important;
+    }
+    body.has-bottom-tab { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Mobile nav drawer (used on landing)
+   ────────────────────────────────────────────────────────────────── */
+.mobile-nav {
+  position: fixed; top: 0; right: -100%;
+  width: 100%; max-width: 350px; height: 100%;
+  background: #ffffff; z-index: 10000;
+  box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+  transition: 0.6s cubic-bezier(0.8, 0, 0.2, 1);
+  padding: 40px 30px;
+  display: flex; flex-direction: column;
+}
+.mobile-nav.active { right: 0; }
+@media (max-width: 480px) { .mobile-nav { max-width: 100%; } }

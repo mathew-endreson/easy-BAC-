@@ -1,0 +1,5 @@
+# Copy this file to `.dev.vars` (gitignored) for local `wrangler dev`.
+# Secrets never go in wrangler.jsonc — only here locally, and via
+# `wrangler secret put <NAME>` for staging/production.
+
+LESSON_SIGNING_SECRET=dev-secret-change-me

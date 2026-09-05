@@ -7,3 +7,5 @@ dist
 .vite
 verify_firebase.mjs
 package-lock.json
+.wrangler
+.dev.vars

@@ -15,7 +15,10 @@ const translations = {
     passed: '🎉 Passed', failed: '❌ Failed',
     calculate: 'Calculate', assessment: 'Assessment',
     flashcards: 'Flashcards', resources: 'Resources',
-    welcome: 'Welcome Back,', 'todo-list': 'To-Do List'
+    welcome: 'Welcome Back,', 'todo-list': 'To-Do List',
+    teachers: 'Teachers', 'contact-us': 'Contact us', 'register-now': 'Register now',
+    games: 'Games', saves: 'Saves', quizzes: 'Quizzes', resumes: 'Resumes',
+    browse: 'browse', 'my-library': 'My Library'
   },
   ar: {
     home: 'الرئيسية', courses: 'الدورات', library: 'المكتبة', pomodoro: 'بومودورو',
@@ -31,7 +34,10 @@ const translations = {
     passed: '🎉 ناجح', failed: '❌ راسب',
     calculate: 'احسب المعدل', assessment: 'تقييم',
     flashcards: 'بطاقات مراجعة', resources: 'مصادر',
-    welcome: 'مرحباً بعودتك،', 'todo-list': 'قائمة المهام'
+    welcome: 'مرحباً بعودتك،', 'todo-list': 'قائمة المهام',
+    teachers: 'الأساتذة', 'contact-us': 'اتصل بنا', 'register-now': 'سجل الآن',
+    games: 'ألعاب', saves: 'المحفوظات', quizzes: 'اختبارات', resumes: 'ملخصات',
+    browse: 'تصفح', 'my-library': 'مكتبتي'
   }
 }
 

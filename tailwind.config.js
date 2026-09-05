@@ -22,13 +22,14 @@ export default {
         'bg-card-alt': '#F4F5FF',
         'bg-soft': '#FFFFFF',
         'bg-page': '#FFFFFF',
-        'footer-bg': '#4B0B05',
-        'footer-text': '#B7B7B7'
+        'footer-bg': '#240300',
+        'footer-text': '#BBBBBB'
       },
       fontFamily: {
         body: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
         heading: ['"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
-        outfit: ['Outfit', 'system-ui', 'sans-serif']
+        outfit: ['Outfit', 'system-ui', 'sans-serif'],
+        footer: ['Roboto', 'system-ui', '-apple-system', 'sans-serif']
       },
       fontSize: {
         'ez-xs': '0.64rem',

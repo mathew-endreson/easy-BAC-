@@ -68,7 +68,7 @@ export default function Flashcard() {
 
       <div className="w-full pt-[100px] max-md:pt-5">
         <div className="flex justify-start px-10 max-md:px-4">
-          <button onClick={() => navigate('/home')} className="bg-transparent border-0 text-base font-semibold text-ink cursor-pointer flex items-center gap-2 hover:text-[#23415E] hover:-translate-x-1">
+          <button onClick={() => navigate('/courses')} className="bg-transparent border-0 text-base font-semibold text-ink cursor-pointer flex items-center gap-2 hover:text-[#23415E] hover:-translate-x-1">
             <h5>← Back</h5>
           </button>
         </div>

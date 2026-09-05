@@ -1,0 +1,54 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ezbac-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Top-level config = staging. `npm run dev` runs this via `wrangler dev`,
+  // which defaults to local D1/R2 emulation (no Cloudflare account needed).
+  // The database_id below is a placeholder — replace it with the real id
+  // from `wrangler d1 create ezbac-staging` before you ever deploy for real;
+  // local dev never calls the Cloudflare API so the placeholder is harmless.
+  "vars": {
+    "APP_ORIGIN": "http://localhost:5173",
+    "ENVIRONMENT": "staging"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ezbac-staging",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "ezbac-files-staging"
+    }
+  ],
+
+  "env": {
+    "production": {
+      "vars": {
+        "APP_ORIGIN": "https://ezbac.pages.dev",
+        "ENVIRONMENT": "production"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "ezbac-production",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "FILES",
+          "bucket_name": "ezbac-files-production"
+        }
+      ]
+    }
+  }
+}

@@ -83,7 +83,7 @@ export default function Quiz() {
         <DashboardNavbar />
         <div className="text-center p-[100px]">
           <h2>No quizzes found for {subject}</h2>
-          <button onClick={() => navigate('/home')} className="mt-4 underline">Go Back</button>
+          <button onClick={() => navigate('/courses')} className="mt-4 underline">Go Back</button>
         </div>
       </div>
     )
@@ -95,7 +95,7 @@ export default function Quiz() {
 
       <div className="w-full pt-[100px] max-md:pt-5">
         <div className="flex justify-start px-10 max-md:px-4">
-          <button onClick={() => navigate('/home')} className="bg-transparent border-0 text-base font-semibold text-ink cursor-pointer flex items-center gap-2 hover:text-[#23415E] hover:-translate-x-1">
+          <button onClick={() => navigate('/courses')} className="bg-transparent border-0 text-base font-semibold text-ink cursor-pointer flex items-center gap-2 hover:text-[#23415E] hover:-translate-x-1">
             <h5>← Back</h5>
           </button>
         </div>
@@ -182,7 +182,7 @@ export default function Quiz() {
             </p>
             <div className="flex gap-4 justify-center mt-[30px]">
               <button onClick={() => { setStage('cover'); setCurrent(0); setAnswers([]); setScore(0) }} className="bg-primary text-white border-0 rounded-pill font-medium px-[30px] py-3 cursor-pointer hover:shadow-[0_10px_25px_rgba(171,16,23,0.3)]">Restart</button>
-              <button onClick={() => navigate('/home')} className="bg-[#333] text-white border-0 rounded-pill font-medium px-[30px] py-3 cursor-pointer">Dashboard</button>
+              <button onClick={() => navigate('/courses')} className="bg-[#333] text-white border-0 rounded-pill font-medium px-[30px] py-3 cursor-pointer">Back to Courses</button>
             </div>
           </div>
         )}

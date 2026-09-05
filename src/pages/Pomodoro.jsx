@@ -8,43 +8,83 @@ const modes = [
   { time: '00:35:00', label: 'Long Break', key: 'long-break' }
 ]
 
+const RADIUS = 130
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+const SESSIONS_KEY = 'ezbac_pomodoro_sessions'
+const todayKey = () => new Date().toISOString().slice(0, 10)
+
 function parseTime(str) {
   const parts = str.split(':').map(Number)
   return parts[0] * 3600 + parts[1] * 60 + parts[2]
 }
 function formatTime(seconds) {
-  const h = String(Math.floor(seconds / 3600)).padStart(2, '0')
+  const h = Math.floor(seconds / 3600)
   const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')
   const s = String(seconds % 60).padStart(2, '0')
-  return `${h}:${m}:${s}`
+  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`
+}
+function loadSessions() {
+  try {
+    const data = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '{}')
+    return data[todayKey()] || 0
+  } catch {
+    return 0
+  }
 }
 
 export default function Pomodoro() {
   const { t } = useLang()
   const [activeMode, setActiveMode] = useState(0)
   const [currentTime, setCurrentTime] = useState(45 * 60)
+  const [preciseRemainingMs, setPreciseRemainingMs] = useState(45 * 60 * 1000)
   const [isRunning, setIsRunning] = useState(false)
+  const [sessionsToday, setSessionsToday] = useState(loadSessions)
   const [todos, setTodos] = useState(() => JSON.parse(localStorage.getItem('ezbac_todos') || '[]'))
   const [todoInput, setTodoInput] = useState('')
-  const intervalRef = useRef(null)
+  const rafRef = useRef(null)
+
+  // Drives both the countdown text and the ring from the real wall-clock end
+  // time on every animation frame, instead of a 1s setInterval + a CSS
+  // transition guessing at the gap — that combination drifted visibly
+  // whenever the interval callback fired a few ms early/late.
+  function runLoop(endTime) {
+    cancelAnimationFrame(rafRef.current)
+    const tick = () => {
+      const remainingMs = endTime - Date.now()
+      if (remainingMs <= 0) {
+        setPreciseRemainingMs(0)
+        stopTimer(true)
+        return
+      }
+      setPreciseRemainingMs(remainingMs)
+      setCurrentTime(Math.ceil(remainingMs / 1000))
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+  }
 
   useEffect(() => {
     const savedEnd = localStorage.getItem('ezbac_timer_end')
     const savedRunning = localStorage.getItem('ezbac_timer_running') === 'true'
     if (savedEnd && savedRunning) {
-      const remaining = Math.round((parseInt(savedEnd) - Date.now()) / 1000)
-      if (remaining > 0) {
-        setCurrentTime(remaining)
-        startTimer(remaining)
+      const endTime = parseInt(savedEnd)
+      const remainingMs = endTime - Date.now()
+      if (remainingMs > 0) {
+        setIsRunning(true)
+        runLoop(endTime)
       } else {
         localStorage.removeItem('ezbac_timer_end')
         localStorage.setItem('ezbac_timer_running', 'false')
+        const base = parseInt(localStorage.getItem('ezbac_timer_base_seconds') || 45 * 60)
+        setCurrentTime(base)
+        setPreciseRemainingMs(base * 1000)
       }
     } else {
       const base = parseInt(localStorage.getItem('ezbac_timer_base_seconds') || 45 * 60)
       setCurrentTime(base)
+      setPreciseRemainingMs(base * 1000)
     }
-    return () => clearInterval(intervalRef.current)
+    return () => cancelAnimationFrame(rafRef.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -52,29 +92,37 @@ export default function Pomodoro() {
     localStorage.setItem('ezbac_todos', JSON.stringify(todos))
   }, [todos])
 
-  function startTimer(initial) {
-    const endTime = Date.now() + initial * 1000
+  function recordSession() {
+    try {
+      const data = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '{}')
+      const key = todayKey()
+      data[key] = (data[key] || 0) + 1
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(data))
+      setSessionsToday(data[key])
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  function startTimer(initialSeconds) {
+    const endTime = Date.now() + initialSeconds * 1000
     localStorage.setItem('ezbac_timer_end', endTime)
     localStorage.setItem('ezbac_timer_running', 'true')
     setIsRunning(true)
-    clearInterval(intervalRef.current)
-    intervalRef.current = setInterval(() => {
-      const remaining = Math.round((parseInt(localStorage.getItem('ezbac_timer_end')) - Date.now()) / 1000)
-      if (remaining > 0) setCurrentTime(remaining)
-      else stopTimer(true)
-    }, 1000)
+    runLoop(endTime)
   }
 
   function stopTimer(finished = false) {
-    clearInterval(intervalRef.current)
-    intervalRef.current = null
+    cancelAnimationFrame(rafRef.current)
+    rafRef.current = null
     setIsRunning(false)
     localStorage.setItem('ezbac_timer_running', 'false')
     const baseDuration = parseTime(modes[activeMode].time)
     localStorage.setItem('ezbac_timer_base_seconds', finished ? baseDuration : currentTime)
     if (finished) {
       setCurrentTime(baseDuration)
-      alert("Time's up! Great job!")
+      setPreciseRemainingMs(baseDuration * 1000)
+      if (activeMode === 0) recordSession()
     }
   }
 
@@ -87,6 +135,7 @@ export default function Pomodoro() {
     stopTimer()
     const base = parseTime(modes[activeMode].time)
     setCurrentTime(base)
+    setPreciseRemainingMs(base * 1000)
     localStorage.setItem('ezbac_timer_base_seconds', base)
   }
 
@@ -95,6 +144,7 @@ export default function Pomodoro() {
     setActiveMode(i)
     const seconds = parseTime(modes[i].time)
     setCurrentTime(seconds)
+    setPreciseRemainingMs(seconds * 1000)
     localStorage.setItem('ezbac_timer_base_seconds', seconds)
   }
 
@@ -103,93 +153,133 @@ export default function Pomodoro() {
     setTodos([...todos, { text: todoInput.trim(), completed: false, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) }])
     setTodoInput('')
   }
-  function toggleTodo(i) { setTodos(todos.map((t, idx) => idx === i ? { ...t, completed: !t.completed } : t)) }
+  function toggleTodo(i) { setTodos(todos.map((td, idx) => idx === i ? { ...td, completed: !td.completed } : td)) }
   function deleteTodo(i) { setTodos(todos.filter((_, idx) => idx !== i)) }
 
+  const total = parseTime(modes[activeMode].time)
+  const progress = total > 0 ? preciseRemainingMs / (total * 1000) : 0
+  const dashoffset = CIRCUMFERENCE * (1 - progress)
+  const doneCount = todos.filter((td) => td.completed).length
+
   return (
-    <>
+    <div style={{ fontFamily: 'Outfit, sans-serif' }}>
       <DashboardNavbar />
 
-      <div className="mt-[100px] flex p-6 gap-6 max-lg:flex-col max-md:mt-5 max-md:p-3.5">
-        <div className="flex-1 max-lg:order-[-1] max-lg:w-full">
-          <div className="relative w-full h-full border border-border-soft rounded-[51px] p-10 flex flex-col items-center justify-start overflow-hidden max-md:p-5 max-md:rounded-3xl">
-            <img src="/assets/images/timerBG.svg" className="w-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-50 pointer-events-none z-0" alt="" />
-
-            <div className="relative z-10 w-full flex justify-between items-center">
-              <h4>{t(modes[activeMode].key)}</h4>
-              <div className="flex items-center gap-4">
-                <button className="w-[43px] h-[43px] bg-primary-soft border-0 rounded-full p-2.5 cursor-pointer">
-                  <img src="/assets/icons/sound.svg" alt="sound" />
-                </button>
-                <img src="/assets/icons/edit.svg" className="w-[30px] h-[30px] cursor-pointer" alt="edit" />
-              </div>
-            </div>
-
-            <div className="relative z-10 flex gap-4 mt-[156px] max-md:mt-10 max-md:flex-wrap max-md:justify-center max-md:gap-2">
-              {modes.map((m, i) => (
-                <button
-                  key={m.label}
-                  onClick={() => switchMode(i)}
-                  className={`h-9 px-14 rounded-[13px] cursor-pointer max-md:px-5 max-md:text-[0.8rem] max-md:h-[34px] max-[480px]:px-3.5 max-[480px]:text-[0.75rem] ${
-                    activeMode === i ? 'bg-primary-strong text-white border-0' : 'border border-primary-deep bg-transparent text-primary-deep'
-                  }`}
-                >
-                  {t(m.key) === m.key ? m.label : t(m.key)}
-                </button>
-              ))}
-            </div>
-
-            <div className="relative z-10 mt-6 text-[120px] font-body text-primary-deep text-center max-md:text-[56px] max-[480px]:text-[44px]">
-              {formatTime(currentTime)}
-            </div>
-
-            <div className="relative z-10 mt-6 flex gap-4 max-md:mt-5">
-              <button onClick={togglePlay} className={`h-[38px] px-[25px] border-0 rounded-[20px] cursor-pointer ${isRunning ? 'bg-[#ffc1c5]' : 'bg-primary-accent'}`}>
-                <img src={isRunning ? '/assets/icons/pause.svg' : '/assets/icons/play.svg'} alt="play" />
-              </button>
-              <button onClick={reset} className="h-[38px] px-[25px] border border-primary-deep bg-transparent rounded-[20px] cursor-pointer">
-                <img src="/assets/icons/reset.svg" alt="reset" />
-              </button>
-            </div>
-          </div>
+      <div className="ez-container mt-[110px] max-md:mt-5 max-md:px-3.5 pb-16">
+        <div className="mb-8">
+          <h1 className="font-heading font-extrabold text-3xl max-md:text-2xl">Study Timer</h1>
+          <p className="text-ink-muted mt-1">Stay focused with timed sessions and short breaks.</p>
         </div>
 
-        <div className="flex-[0_0_30%] max-lg:w-full max-lg:mt-6">
-          <div className="w-full bg-white border border-border-card p-4 max-md:rounded-2xl max-md:p-3.5">
-            <div className="flex justify-between items-center">
-              <h4 className="text-primary-deep">{t('todo-list')}</h4>
-            </div>
+        <div className="flex gap-8 max-lg:flex-col">
+          <div className="flex-1">
+            <div className="border border-border-light rounded-[32px] bg-white p-10 flex flex-col items-center max-md:p-6">
+              <div className="inline-flex bg-bg-card rounded-pill p-1.5 gap-1">
+                {modes.map((m, i) => (
+                  <button
+                    key={m.label}
+                    onClick={() => switchMode(i)}
+                    className={`h-10 px-6 rounded-pill text-sm font-medium cursor-pointer transition max-md:px-3.5 max-md:text-xs ${
+                      activeMode === i ? 'bg-primary text-white shadow-sm' : 'bg-transparent text-ink-muted hover:text-ink'
+                    }`}
+                  >
+                    {t(m.key) === m.key ? m.label : t(m.key)}
+                  </button>
+                ))}
+              </div>
 
-            <div className="flex gap-2.5 mt-5">
-              <input
-                type="text"
-                value={todoInput}
-                onChange={(e) => setTodoInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addTodo()}
-                placeholder={t('add-task')}
-                className="flex-1 h-[47px] rounded-xl border border-border-card px-4 outline-none font-body focus:border-primary"
-              />
-              <button onClick={addTodo} className="w-[47px] h-[47px] rounded-xl bg-primary-soft border-0 cursor-pointer flex items-center justify-center hover:bg-primary [&:hover>img]:invert">
-                <img src="/assets/icons/add.svg" alt="add" />
-              </button>
-            </div>
-
-            <hr className="my-[17px]" />
-
-            <div className="todo-list-scroll flex flex-col gap-3">
-              {todos.map((todo, i) => (
-                <div key={i} className={`flex items-center gap-[15px] p-4 bg-white border border-border-card rounded-[15px] transition hover:border-primary hover:translate-x-1.5 ${todo.completed ? 'bg-[#F8F9FA] opacity-70' : ''}`}>
-                  <div onClick={() => toggleTodo(i)} className={`w-6 h-6 border-2 rounded-md flex items-center justify-center cursor-pointer text-white font-bold ${todo.completed ? 'bg-primary border-primary' : 'border-border-card'}`}>
-                    {todo.completed ? '✓' : ''}
-                  </div>
-                  <div className={`flex-1 text-[15px] ${todo.completed ? 'line-through text-[#94A3B8]' : 'text-ink'}`}>{todo.text}</div>
-                  <button onClick={() => deleteTodo(i)} className="bg-transparent border-0 text-border-card text-lg cursor-pointer hover:text-primary">✕</button>
+              <div className="relative mt-10 mb-6 w-[280px] h-[280px] max-md:w-[220px] max-md:h-[220px]">
+                <svg viewBox="0 0 280 280" className="-rotate-90 w-full h-full">
+                  <circle cx="140" cy="140" r={RADIUS} fill="none" stroke="#F4F5FF" strokeWidth="16" />
+                  <circle
+                    cx="140" cy="140" r={RADIUS} fill="none" stroke="#AB1017" strokeWidth="16" strokeLinecap="round"
+                    strokeDasharray={CIRCUMFERENCE} strokeDashoffset={dashoffset}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="font-body font-semibold text-primary-deep text-[52px] max-md:text-[38px] tabular-nums leading-none">
+                    {formatTime(currentTime)}
+                  </span>
+                  <span className="text-ink-muted text-sm mt-2">{isRunning ? 'in progress' : 'paused'}</span>
                 </div>
-              ))}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={reset}
+                  aria-label="Reset"
+                  className="w-14 h-14 rounded-full border border-border-light bg-white cursor-pointer flex items-center justify-center hover:bg-[#f9f9f9] transition"
+                >
+                  <img src="/assets/icons/reset.svg" alt="" className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={togglePlay}
+                  aria-label={isRunning ? 'Pause' : 'Play'}
+                  className="w-20 h-20 rounded-full border-0 bg-primary text-white cursor-pointer flex items-center justify-center shadow-[0_10px_25px_rgba(171,16,23,0.35)] hover:shadow-[0_14px_30px_rgba(171,16,23,0.45)] hover:-translate-y-0.5 transition"
+                >
+                  <img src={isRunning ? '/assets/icons/pause.svg' : '/assets/icons/play.svg'} alt="" className="w-7 h-7 invert" />
+                </button>
+                <button
+                  aria-label="Mute"
+                  className="w-14 h-14 rounded-full border border-border-light bg-white cursor-pointer flex items-center justify-center hover:bg-[#f9f9f9] transition"
+                >
+                  <img src="/assets/icons/sound.svg" alt="" className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 mt-10">
+                {Array.from({ length: Math.max(sessionsToday, 4) }).map((_, i) => (
+                  <span key={i} className={`w-2.5 h-2.5 rounded-full ${i < sessionsToday ? 'bg-primary' : 'bg-border-light'}`} />
+                ))}
+              </div>
+              <p className="text-sm text-ink-muted mt-3">
+                {sessionsToday === 0 ? 'No focus sessions completed yet today' : `${sessionsToday} focus session${sessionsToday === 1 ? '' : 's'} completed today`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex-[0_0_360px] max-lg:flex-none max-lg:w-full">
+            <div className="border border-border-light rounded-[32px] bg-white p-6">
+              <div className="flex justify-between items-center">
+                <h4 className="font-heading text-xl">{t('todo-list')}</h4>
+                {todos.length > 0 && <span className="text-xs text-ink-muted">{doneCount}/{todos.length} done</span>}
+              </div>
+
+              <div className="flex gap-2.5 mt-5">
+                <input
+                  type="text"
+                  value={todoInput}
+                  onChange={(e) => setTodoInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addTodo()}
+                  placeholder={t('add-task')}
+                  className="flex-1 h-12 rounded-2xl bg-bg-card px-4 outline-none font-body text-sm focus:ring-2 focus:ring-primary/30"
+                />
+                <button onClick={addTodo} className="w-12 h-12 rounded-2xl bg-primary border-0 cursor-pointer flex items-center justify-center hover:bg-primary-strong transition shrink-0">
+                  <img src="/assets/icons/add.svg" alt="add" className="w-4 h-4 invert" />
+                </button>
+              </div>
+
+              <div className="todo-list-scroll flex flex-col gap-2.5 mt-5 max-h-[420px]">
+                {todos.length === 0 && (
+                  <p className="text-sm text-ink-muted text-center py-10">Nothing on your list yet — add a task to get started.</p>
+                )}
+                {todos.map((todo, i) => (
+                  <div key={i} className={`flex items-center gap-3 p-3.5 rounded-2xl border border-border-light transition hover:border-primary/40 ${todo.completed ? 'bg-[#FAFAFA]' : 'bg-white'}`}>
+                    <button
+                      onClick={() => toggleTodo(i)}
+                      className={`w-6 h-6 shrink-0 rounded-md flex items-center justify-center cursor-pointer text-white text-xs font-bold transition ${todo.completed ? 'bg-primary' : 'border-2 border-border-card'}`}
+                    >
+                      {todo.completed ? '✓' : ''}
+                    </button>
+                    <div className={`flex-1 text-sm ${todo.completed ? 'line-through text-ink-muted' : 'text-ink'}`}>{todo.text}</div>
+                    <button onClick={() => deleteTodo(i)} className="bg-transparent border-0 text-ink-muted text-base cursor-pointer hover:text-primary-strong shrink-0">✕</button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

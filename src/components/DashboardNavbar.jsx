@@ -4,11 +4,11 @@ import { useLang } from '../contexts/LangContext.jsx'
 import LangToggle from './LangToggle.jsx'
 
 const items = [
-  { to: '/home', icon: '/assets/icons/Home.svg', key: 'home', fallback: 'Home' },
   { to: '/library', icon: '/assets/icons/Library.svg', key: 'library', fallback: 'Library' },
+  { to: '/courses', icon: '/assets/icons/book.svg', key: 'courses', fallback: 'Courses' },
   { to: '/pomodoro', icon: '/assets/icons/pomodoro.svg', key: 'pomodoro', fallback: 'Pomodoro' },
   { to: '/calculator', icon: '/assets/icons/calculator.svg', key: 'calculator', fallback: 'Calculator' },
-  { to: '/games', icon: '/assets/icons/games.svg', key: 'courses', fallback: 'Games' }
+  { to: '/games', icon: '/assets/icons/games.svg', key: 'games', fallback: 'Games' }
 ]
 
 export default function DashboardNavbar() {
@@ -23,7 +23,7 @@ export default function DashboardNavbar() {
     <nav className="dashboard-navbar-bottom fixed top-0 border-b border-border-soft w-full flex justify-center z-[1000]">
       <div className="dashboard-container w-full flex items-center justify-between px-[26px] bg-white/60 backdrop-blur-[12px] rounded-[20px]">
         <div className="logo">
-          <Link to="/home">
+          <Link to="/courses">
             <img src="/assets/images/logo.svg" alt="EZ Bac" className="h-[100px] w-auto block" />
           </Link>
         </div>

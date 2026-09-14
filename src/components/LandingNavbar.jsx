@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLang } from '../contexts/LangContext.jsx'
-import LangToggle from './LangToggle.jsx'
+import LanguageSelector from './LanguageSelector.jsx'
+import ThemeToggle from './ThemeToggle.jsx'
+import UserMenu from './UserMenu.jsx'
 
 export default function LandingNavbar() {
   const { t } = useLang()
@@ -10,7 +12,7 @@ export default function LandingNavbar() {
   return (
     <>
       <nav className="fixed top-0 border-b border-border-soft w-full flex justify-center z-[1000]">
-        <div className="w-full flex items-center justify-between px-[26px] max-md:px-4 max-md:h-20 max-md:border max-md:border-white/30 bg-white/60 backdrop-blur-[12px] rounded-[20px]">
+        <div className="w-full flex items-center justify-between px-[26px] max-md:px-4 max-md:h-20 max-md:border max-md:border-border-soft/40 bg-bg-soft/70 backdrop-blur-[12px] rounded-[20px]">
           <div className="flex items-center gap-[140px] max-md:gap-5">
             <div className="logo">
               <Link to="/">
@@ -24,8 +26,10 @@ export default function LandingNavbar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <LangToggle />
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
+            <ThemeToggle />
+            <div className="max-md:hidden"><UserMenu /></div>
             <div
               className="hidden max-md:flex flex-col gap-[6px] cursor-pointer p-[10px] z-[2001]"
               onClick={() => setMobileOpen(true)}
@@ -54,7 +58,7 @@ export default function LandingNavbar() {
           <a href="#faq" onClick={() => setMobileOpen(false)} className="no-underline text-[1.4rem] font-bold text-ink">{t('faq')}</a>
           <div className="mt-auto pt-[30px]">
             <Link
-              to="/home"
+              to="/library"
               onClick={() => setMobileOpen(false)}
               className="inline-block bg-primary text-white px-8 py-4 rounded-pill no-underline font-medium"
             >

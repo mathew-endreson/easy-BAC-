@@ -2,38 +2,65 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { STREAMS, streamLabel } from '../constants/streams.js'
+import SubjectUnitPicker from '../components/SubjectUnitPicker.jsx'
+import AdminAcademic from './admin/AdminAcademic.jsx'
+import AdminStudents from './admin/AdminStudents.jsx'
+import AdminTeachers from './admin/AdminTeachers.jsx'
+import AdminCourses from './admin/AdminCourses.jsx'
+import Icon from '../components/ui/Icon.jsx'
 
 const emptyQuestion = () => ({ question: '', options: ['', '', '', ''], correctAnswer: '' })
 const emptyFlash = () => ({ question: '', answer: '' })
 
+// Shared stream <select>. Empty value = "All streams" (content with no stream is
+// visible to every student until tagged — matches the platform's legacy-content
+// policy).
+function StreamSelect({ value, onChange }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none"
+    >
+      <option value="">🌐 All streams (visible to everyone)</option>
+      {STREAMS.map((s) => (
+        <option key={s.id} value={s.id}>{s.icon} {streamLabel(s.id, 'ar')} — {streamLabel(s.id, 'fr')}</option>
+      ))}
+    </select>
+  )
+}
+
 export default function Admin() {
   const navigate = useNavigate()
-  const [authed, setAuthed] = useState(false)
-  const [pass, setPass] = useState('')
-  const [tab, setTab] = useState('add-quiz')
+  const { profile, logout } = useAuth()
+  const [tab, setTab] = useState('students')
   const [toast, setToast] = useState('')
 
   // Quiz form
   const [qSubject, setQSubject] = useState('')
+  const [qStream, setQStream] = useState('')
+  const [qSubjectId, setQSubjectId] = useState('')
+  const [qUnitId, setQUnitId] = useState('')
   const [questions, setQuestions] = useState([emptyQuestion()])
 
   // Flashcard form
   const [fSubject, setFSubject] = useState('')
+  const [fStream, setFStream] = useState('')
+  const [fSubjectId, setFSubjectId] = useState('')
+  const [fUnitId, setFUnitId] = useState('')
+  const [fSetTitle, setFSetTitle] = useState('')
   const [flashcards, setFlashcards] = useState([emptyFlash()])
 
   // Resource form
-  const [resForm, setResForm] = useState({ subject: '', title: '', type: 'drive', url: '' })
+  const [resForm, setResForm] = useState({ subject: '', title: '', type: 'drive', url: '', stream: '', subjectId: '', unitId: '' })
 
   // Edit state
   const [editing, setEditing] = useState({ id: null, type: null })
 
   // Data list
   const [dataList, setDataList] = useState({ col: null, items: [], loading: false, error: '' })
-
-  function checkAuth() {
-    if (pass === 'admin123') setAuthed(true)
-    else alert('Incorrect Password!')
-  }
 
   function showToast(msg) {
     setToast(msg)
@@ -48,6 +75,9 @@ export default function Admin() {
     e.preventDefault()
     const data = {
       subject: qSubject,
+      stream: qStream,
+      subjectId: qSubjectId,
+      unitId: qUnitId,
       title: qSubject + ' Quiz',
       questions: questions.map((q) => ({
         question: q.question,
@@ -65,6 +95,9 @@ export default function Admin() {
         showToast('Quiz saved!')
       }
       setQSubject('')
+      setQStream('')
+      setQSubjectId('')
+      setQUnitId('')
       setQuestions([emptyQuestion()])
       if (editing.type === 'quizzes') {
         await fetchList('quizzes')
@@ -76,17 +109,26 @@ export default function Admin() {
   async function saveFlashcards(e) {
     e.preventDefault()
     try {
+      const meta = { subject: fSubject, stream: fStream, subjectId: fSubjectId, unitId: fUnitId, setTitle: fSetTitle || fSubject }
       if (editing.type === 'flashcards' && editing.id) {
-        const data = { subject: fSubject, question: flashcards[0].question, answer: flashcards[0].answer }
-        await updateDoc(doc(db, 'flashcards', editing.id), data)
+        // Preserve the card's existing setId (if any) — editing one card must
+        // not split it out of its deck.
+        await updateDoc(doc(db, 'flashcards', editing.id), { ...meta, question: flashcards[0].question, answer: flashcards[0].answer })
         showToast('Flashcard Updated!')
       } else {
+        // Every card saved together in this submission shares one generated
+        // setId, so they group into a single deck (see src/services/decks.js).
+        const setId = doc(collection(db, 'flashcards')).id
         for (const fc of flashcards) {
-          await addDoc(collection(db, 'flashcards'), { subject: fSubject, question: fc.question, answer: fc.answer })
+          await addDoc(collection(db, 'flashcards'), { ...meta, setId, question: fc.question, answer: fc.answer })
         }
         showToast(`Saved ${flashcards.length} Flashcards!`)
       }
       setFSubject('')
+      setFStream('')
+      setFSubjectId('')
+      setFUnitId('')
+      setFSetTitle('')
       setFlashcards([emptyFlash()])
       if (editing.type === 'flashcards') {
         await fetchList('flashcards')
@@ -106,7 +148,7 @@ export default function Admin() {
         await addDoc(collection(db, 'resources'), resForm)
         showToast('Resource Saved!')
       }
-      setResForm({ subject: '', title: '', type: 'drive', url: '' })
+      setResForm({ subject: '', title: '', type: 'drive', url: '', stream: '', subjectId: '', unitId: '' })
       if (editing.type === 'resources') {
         await fetchList('resources')
         resetEdit()
@@ -142,6 +184,9 @@ export default function Admin() {
     if (col === 'quizzes') {
       setTab('add-quiz')
       setQSubject(item.subject || '')
+      setQStream(item.stream || '')
+      setQSubjectId(item.subjectId || '')
+      setQUnitId(item.unitId || '')
       setQuestions((item.questions || []).map((q) => ({
         question: q.question || '',
         options: [q.options?.[0] || '', q.options?.[1] || '', q.options?.[2] || '', q.options?.[3] || ''],
@@ -150,96 +195,110 @@ export default function Admin() {
     } else if (col === 'flashcards') {
       setTab('add-flash')
       setFSubject(item.subject || '')
+      setFStream(item.stream || '')
+      setFSubjectId(item.subjectId || '')
+      setFUnitId(item.unitId || '')
+      setFSetTitle(item.setTitle || '')
       setFlashcards([{ question: item.question || '', answer: item.answer || '' }])
     } else if (col === 'resources') {
       setTab('add-resource')
-      setResForm({ subject: item.subject || '', title: item.title || '', type: item.type || 'drive', url: item.url || '' })
+      setResForm({ subject: item.subject || '', title: item.title || '', type: item.type || 'drive', url: item.url || '', stream: item.stream || '', subjectId: item.subjectId || '', unitId: item.unitId || '' })
     }
   }
 
-  if (!authed) {
-    return (
-      <div className="fixed inset-0 bg-white z-[9999] flex items-center justify-center flex-col" style={{ fontFamily: 'Outfit, sans-serif' }}>
-        <div className="bg-white p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] text-center w-80">
-          <img src="/assets/images/logo.svg" alt="logo" className="h-10 mb-5 mx-auto" />
-          <h2>Admin Login</h2>
-          <input
-            type="password"
-            value={pass}
-            onChange={(e) => setPass(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && checkAuth()}
-            placeholder="Enter Password"
-            className="w-full p-[15px] my-5 border-2 border-[#eee] rounded-xl text-base box-border"
-          />
-          <button onClick={checkAuth} className="bg-primary-strong text-white border-0 p-4 rounded-[14px] font-bold cursor-pointer w-full hover:bg-[#9a1418] hover:-translate-y-0.5">
-            Access Portal
-          </button>
-        </div>
-      </div>
-    )
+  // Access is enforced by the <RequireAdmin> route guard — only super admins
+  // ever render this component, so no in-component password gate is needed.
+  async function handleSignOut() {
+    await logout()
+    navigate('/', { replace: true })
   }
 
-  const navBtnBase = 'bg-transparent border-0 py-[15px] px-5 text-left rounded-[15px] cursor-pointer font-medium text-[#666] w-full hover:bg-[#fdfdfd] hover:text-primary-strong'
+  const navBtnBase = 'bg-transparent border-0 py-[15px] px-5 text-left rounded-[15px] cursor-pointer font-medium text-ink-muted w-full hover:bg-surface-muted hover:text-primary-strong'
 
   return (
-    <div className="grid grid-cols-[280px_1fr] min-h-screen bg-[#f8f9fa] max-[850px]:block" style={{ fontFamily: 'Outfit, sans-serif', color: '#2D2D2D' }}>
-      <aside className="bg-white p-[40px_20px] border-r border-[#eee] flex flex-col gap-4 max-[850px]:p-[15px] max-[850px]:flex-row max-[850px]:overflow-x-auto max-[850px]:whitespace-nowrap max-[850px]:gap-2.5 max-[850px]:border-r-0 max-[850px]:border-b max-[850px]:sticky max-[850px]:top-0 max-[850px]:z-[100]">
+    <div className="grid grid-cols-[280px_1fr] min-h-screen bg-bg-page text-ink max-[850px]:block" style={{ fontFamily: 'Outfit, sans-serif' }}>
+      <aside className="bg-surface p-[40px_20px] border-r border-border-soft flex flex-col gap-4 max-[850px]:p-[15px] max-[850px]:flex-row max-[850px]:overflow-x-auto max-[850px]:whitespace-nowrap max-[850px]:gap-2.5 max-[850px]:border-r-0 max-[850px]:border-b max-[850px]:sticky max-[850px]:top-0 max-[850px]:z-[100]">
         <div className="px-5 mb-[30px] max-[850px]:hidden">
           <img src="/assets/images/logo.svg" alt="logo" className="h-[35px]" />
-          <p className="text-[#999] text-xs mt-[5px]">EzBac CMS v2.0</p>
+          <p className="text-ink-muted text-xs mt-[5px]">EzBac CMS v2.0</p>
         </div>
         {[
-          { id: 'add-quiz', label: '➕ Add Quiz' },
-          { id: 'add-flash', label: '➕ Add Flashcard' },
-          { id: 'add-resource', label: '➕ Add Resource' },
-          { id: 'view-data', label: '📋 View Data' }
-        ].map((t) => (
+          { id: 'students', label: 'Students', icon: 'users' },
+          { id: 'teachers', label: 'Teachers', icon: 'teacher' },
+          { id: 'courses', label: 'Courses', icon: 'video' },
+          { id: 'academic', label: 'Academic Structure', icon: 'library' },
+          { id: 'add-quiz', label: 'Add Quiz', icon: 'quiz' },
+          { id: 'add-flash', label: 'Add Flashcard', icon: 'cards' },
+          { id: 'add-resource', label: 'Add Resource', icon: 'folder' },
+          { id: 'view-data', label: 'View Data', icon: 'chart' }
+        ].map((tabItem) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`${navBtnBase} ${tab === t.id ? 'bg-[#fff0f0] text-primary-strong' : ''} max-[850px]:py-2.5 max-[850px]:px-[15px] max-[850px]:w-auto max-[850px]:whitespace-nowrap`}
+            key={tabItem.id}
+            onClick={() => setTab(tabItem.id)}
+            className={`${navBtnBase} flex items-center gap-2.5 ${tab === tabItem.id ? 'bg-primary-soft dark:bg-primary/15 text-primary-strong' : ''} max-[850px]:py-2.5 max-[850px]:px-[15px] max-[850px]:w-auto max-[850px]:whitespace-nowrap`}
           >
-            {t.label}
+            <Icon name={tabItem.icon} className="w-[18px] h-[18px] shrink-0" />
+            {tabItem.label}
           </button>
         ))}
-        <hr className="w-full border-0 border-t border-[#eee] my-5 max-[850px]:hidden" />
-        <button onClick={() => navigate('/home')} className={`${navBtnBase} max-[850px]:py-2.5 max-[850px]:px-[15px] max-[850px]:w-auto max-[850px]:whitespace-nowrap`}>
-          ⬅ Exit Admin
+        <hr className="w-full border-0 border-t border-border-soft my-5 max-[850px]:hidden" />
+        {profile?.email && (
+          <p className="px-5 text-[11px] text-ink-muted truncate max-[850px]:hidden" title={profile.email}>
+            {profile.email}
+          </p>
+        )}
+        <button onClick={() => navigate('/library')} className={`${navBtnBase} flex items-center gap-2.5 max-[850px]:py-2.5 max-[850px]:px-[15px] max-[850px]:w-auto max-[850px]:whitespace-nowrap`}>
+          <Icon name="arrowLeft" className="w-[18px] h-[18px]" /> Exit Admin
+        </button>
+        <button onClick={handleSignOut} className={`${navBtnBase} flex items-center gap-2.5 max-[850px]:py-2.5 max-[850px]:px-[15px] max-[850px]:w-auto max-[850px]:whitespace-nowrap`}>
+          <Icon name="lock" className="w-[18px] h-[18px]" /> Sign out
         </button>
       </aside>
 
       <main className="p-10 max-w-[1000px] mx-auto w-full max-[850px]:p-[15px]">
+        {tab === 'students' && <AdminStudents showToast={showToast} />}
+        {tab === 'teachers' && <AdminTeachers showToast={showToast} />}
+        {tab === 'courses' && <AdminCourses showToast={showToast} />}
+        {tab === 'academic' && <AdminAcademic showToast={showToast} />}
+
         {tab === 'add-quiz' && (
-          <section className="bg-white p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
+          <section className="bg-surface p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
             <h2>Add New Quiz {editing.type === 'quizzes' && <span className="text-sm text-primary-strong font-normal ml-2.5">— Editing Mode</span>}</h2>
             <form onSubmit={saveQuiz}>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-[#555]">Subject</label>
-                <input value={qSubject} onChange={(e) => setQSubject(e.target.value)} required placeholder="e.g. History, Math, SVT..." className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none" />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Subject</label>
+                <input value={qSubject} onChange={(e) => setQSubject(e.target.value)} required placeholder="e.g. History, Math, SVT..." className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none" />
+              </div>
+              <div className="mb-6">
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream</label>
+                <StreamSelect value={qStream} onChange={(v) => { setQStream(v); setQSubjectId(''); setQUnitId('') }} />
+              </div>
+              <div className="mb-6">
+                <SubjectUnitPicker stream={qStream} subjectId={qSubjectId} unitId={qUnitId} onSubjectChange={setQSubjectId} onUnitChange={setQUnitId} />
               </div>
 
               {questions.map((q, i) => (
-                <div key={i} className="border border-[#eee] p-5 rounded-xl mb-5">
+                <div key={i} className="border border-border-soft p-5 rounded-xl mb-5">
                   <div className="mb-6">
-                    <label className="block mb-2.5 font-semibold text-sm text-[#555]">Question {i + 1}</label>
-                    <textarea required value={q.question} onChange={(e) => { const next = [...questions]; next[i].question = e.target.value; setQuestions(next) }} placeholder="Enter the question..." className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                    <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Question {i + 1}</label>
+                    <textarea required value={q.question} onChange={(e) => { const next = [...questions]; next[i].question = e.target.value; setQuestions(next) }} placeholder="Enter the question..." className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
                   </div>
                   <div className="grid grid-cols-2 gap-2.5">
                     {[0, 1, 2, 3].map((j) => (
                       <div key={j} className="mb-6">
-                        <label className="block mb-2.5 font-semibold text-sm text-[#555]">Opt {j + 1}</label>
-                        <input required type="text" value={q.options[j]} onChange={(e) => { const next = [...questions]; next[i].options[j] = e.target.value; setQuestions(next) }} className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                        <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Opt {j + 1}</label>
+                        <input required type="text" value={q.options[j]} onChange={(e) => { const next = [...questions]; next[i].options[j] = e.target.value; setQuestions(next) }} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
                       </div>
                     ))}
                   </div>
                   <div className="mb-6">
-                    <label className="block mb-2.5 font-semibold text-sm text-[#555]">Correct Answer (Exact match)</label>
-                    <input required type="text" value={q.correctAnswer} onChange={(e) => { const next = [...questions]; next[i].correctAnswer = e.target.value; setQuestions(next) }} className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                    <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Correct Answer (Exact match)</label>
+                    <input required type="text" value={q.correctAnswer} onChange={(e) => { const next = [...questions]; next[i].correctAnswer = e.target.value; setQuestions(next) }} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
                   </div>
                 </div>
               ))}
 
-              <button type="button" onClick={() => setQuestions([...questions, emptyQuestion()])} className="bg-[#f1f5f9] text-[#333] mb-5 p-3 rounded-[10px] font-semibold border-0 cursor-pointer w-full text-left">
+              <button type="button" onClick={() => setQuestions([...questions, emptyQuestion()])} className="bg-surface-muted text-ink mb-5 p-3 rounded-[10px] font-semibold border-0 cursor-pointer w-full text-left">
                 + Add Another Question
               </button>
 
@@ -251,27 +310,39 @@ export default function Admin() {
         )}
 
         {tab === 'add-flash' && (
-          <section className="bg-white p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
+          <section className="bg-surface p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
             <h2>Add New Flashcard {editing.type === 'flashcards' && <span className="text-sm text-primary-strong font-normal ml-2.5">— Editing Mode</span>}</h2>
             <form onSubmit={saveFlashcards}>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-[#555]">Subject</label>
-                <input required value={fSubject} onChange={(e) => setFSubject(e.target.value)} placeholder="e.g. Physics" className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none" />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Subject</label>
+                <input required value={fSubject} onChange={(e) => setFSubject(e.target.value)} placeholder="e.g. Physics" className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none" />
+              </div>
+              <div className="mb-6">
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Deck / Set Title <span className="font-normal text-ink-muted">(optional — defaults to subject)</span></label>
+                <input value={fSetTitle} onChange={(e) => setFSetTitle(e.target.value)} placeholder="e.g. Complex Numbers — Key Formulas" className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none" />
+                <p className="text-xs text-ink-muted mt-1.5">All cards saved together below become one deck students study and track together.</p>
+              </div>
+              <div className="mb-6">
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream</label>
+                <StreamSelect value={fStream} onChange={(v) => { setFStream(v); setFSubjectId(''); setFUnitId('') }} />
+              </div>
+              <div className="mb-6">
+                <SubjectUnitPicker stream={fStream} subjectId={fSubjectId} unitId={fUnitId} onSubjectChange={setFSubjectId} onUnitChange={setFUnitId} />
               </div>
               {flashcards.map((fc, i) => (
-                <div key={i} className="border border-[#eee] p-5 rounded-xl mb-5">
+                <div key={i} className="border border-border-soft p-5 rounded-xl mb-5">
                   <div className="mb-6">
-                    <label className="block mb-2.5 font-semibold text-sm text-[#555]">Front (Question)</label>
-                    <input required type="text" value={fc.question} onChange={(e) => { const next = [...flashcards]; next[i].question = e.target.value; setFlashcards(next) }} className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                    <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Front (Question)</label>
+                    <input required type="text" value={fc.question} onChange={(e) => { const next = [...flashcards]; next[i].question = e.target.value; setFlashcards(next) }} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
                   </div>
                   <div className="mb-6">
-                    <label className="block mb-2.5 font-semibold text-sm text-[#555]">Back (Answer)</label>
-                    <textarea required value={fc.answer} onChange={(e) => { const next = [...flashcards]; next[i].answer = e.target.value; setFlashcards(next) }} className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                    <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Back (Answer)</label>
+                    <textarea required value={fc.answer} onChange={(e) => { const next = [...flashcards]; next[i].answer = e.target.value; setFlashcards(next) }} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
                   </div>
                 </div>
               ))}
               {editing.type !== 'flashcards' && (
-                <button type="button" onClick={() => setFlashcards([...flashcards, emptyFlash()])} className="bg-[#f1f5f9] text-[#333] mb-5 p-3 rounded-[10px] font-semibold border-0 cursor-pointer w-full text-left">
+                <button type="button" onClick={() => setFlashcards([...flashcards, emptyFlash()])} className="bg-surface-muted text-ink mb-5 p-3 rounded-[10px] font-semibold border-0 cursor-pointer w-full text-left">
                   + Add Another Flashcard
                 </button>
               )}
@@ -283,27 +354,40 @@ export default function Admin() {
         )}
 
         {tab === 'add-resource' && (
-          <section className="bg-white p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
+          <section className="bg-surface p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
             <h2>Add New Resource {editing.type === 'resources' && <span className="text-sm text-primary-strong font-normal ml-2.5">— Editing Mode</span>}</h2>
             <form onSubmit={saveResource}>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-[#555]">Subject</label>
-                <input required value={resForm.subject} onChange={(e) => setResForm({ ...resForm, subject: e.target.value })} className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Subject</label>
+                <input required value={resForm.subject} onChange={(e) => setResForm({ ...resForm, subject: e.target.value })} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
               </div>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-[#555]">Title</label>
-                <input required value={resForm.title} onChange={(e) => setResForm({ ...resForm, title: e.target.value })} className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream</label>
+                <StreamSelect value={resForm.stream} onChange={(v) => setResForm({ ...resForm, stream: v, subjectId: '', unitId: '' })} />
               </div>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-[#555]">Type</label>
-                <select value={resForm.type} onChange={(e) => setResForm({ ...resForm, type: e.target.value })} className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border">
+                <SubjectUnitPicker
+                  stream={resForm.stream}
+                  subjectId={resForm.subjectId}
+                  unitId={resForm.unitId}
+                  onSubjectChange={(v) => setResForm((f) => ({ ...f, subjectId: v }))}
+                  onUnitChange={(v) => setResForm((f) => ({ ...f, unitId: v }))}
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Title</label>
+                <input required value={resForm.title} onChange={(e) => setResForm({ ...resForm, title: e.target.value })} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
+              </div>
+              <div className="mb-6">
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">Type</label>
+                <select value={resForm.type} onChange={(e) => setResForm({ ...resForm, type: e.target.value })} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border">
                   <option value="drive">📂 Google Drive</option>
                   <option value="youtube">🎥 YouTube Video</option>
                 </select>
               </div>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-[#555]">URL</label>
-                <input required type="url" value={resForm.url} onChange={(e) => setResForm({ ...resForm, url: e.target.value })} placeholder="https://..." className="w-full p-3.5 border-2 border-[#f0f0f0] rounded-xl text-[15px] box-border" />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">URL</label>
+                <input required type="url" value={resForm.url} onChange={(e) => setResForm({ ...resForm, url: e.target.value })} placeholder="https://..." className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
               </div>
               <button type="submit" className="bg-primary-strong text-white border-0 p-4 rounded-[14px] font-bold cursor-pointer w-full hover:bg-[#9a1418] hover:-translate-y-0.5">
                 {editing.type === 'resources' ? 'Update Resource' : 'Save Resource'}
@@ -313,26 +397,31 @@ export default function Admin() {
         )}
 
         {tab === 'view-data' && (
-          <section className="bg-white p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
+          <section className="bg-surface p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">
             <h2>Live Content Monitor</h2>
             <div className="mb-5 flex gap-2 flex-wrap">
-              <button onClick={() => fetchList('quizzes')} className="border-0 rounded-md py-2 px-3 cursor-pointer bg-[#f1f5f9]">Quiz Data</button>
-              <button onClick={() => fetchList('flashcards')} className="border-0 rounded-md py-2 px-3 cursor-pointer bg-[#f1f5f9]">Flashcard Data</button>
-              <button onClick={() => fetchList('resources')} className="border-0 rounded-md py-2 px-3 cursor-pointer bg-[#f1f5f9]">Resources</button>
+              <button onClick={() => fetchList('quizzes')} className="border-0 rounded-md py-2 px-3 cursor-pointer bg-surface-muted">Quiz Data</button>
+              <button onClick={() => fetchList('flashcards')} className="border-0 rounded-md py-2 px-3 cursor-pointer bg-surface-muted">Flashcard Data</button>
+              <button onClick={() => fetchList('resources')} className="border-0 rounded-md py-2 px-3 cursor-pointer bg-surface-muted">Resources</button>
             </div>
             <div>
               {dataList.loading && <p>Loading...</p>}
               {dataList.error && <p>{dataList.error}</p>}
-              {!dataList.loading && !dataList.col && <p className="text-[#aaa]">Select a category above to view items.</p>}
+              {!dataList.loading && !dataList.col && <p className="text-ink-muted">Select a category above to view items.</p>}
               {dataList.items.map((item) => {
                 const summary = item.title
                   || (item.question ? (item.question.length > 30 ? item.question.slice(0, 30) : item.question) : null)
                   || (item.questions ? `Quiz: ${item.questions.length} questions` : 'No Title')
                 return (
-                  <div key={item.id} className="flex justify-between items-center p-[15px] border-b border-[#eee] max-[850px]:flex-col max-[850px]:items-start max-[850px]:gap-2.5">
-                    <span><strong>[{item.subject}]</strong> {summary}</span>
+                  <div key={item.id} className="flex justify-between items-center p-[15px] border-b border-border-soft max-[850px]:flex-col max-[850px]:items-start max-[850px]:gap-2.5">
+                    <span>
+                      <strong>[{item.subject}]</strong> {summary}
+                      <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-surface-muted text-ink-muted">
+                        {item.stream ? streamLabel(item.stream, 'ar') : '🌐 All'}
+                      </span>
+                    </span>
                     <div className="flex gap-2.5 items-center">
-                      <span onClick={() => startEdit(dataList.col, item)} className="text-[#2D2D2D] cursor-pointer font-bold bg-[#eee] py-[5px] px-3 rounded-lg">Edit</span>
+                      <span onClick={() => startEdit(dataList.col, item)} className="text-ink cursor-pointer font-bold bg-surface-muted py-[5px] px-3 rounded-lg">Edit</span>
                       <span onClick={() => deleteItem(dataList.col, item.id)} className="text-primary-strong cursor-pointer font-bold p-2">✕ Delete</span>
                     </div>
                   </div>

@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ──────────────────────────────────────────────────────────────────
+   THEME TOKENS — RGB channel triples consumed by tailwind.config.js.
+   Light values are identical to the original hardcoded palette, so light
+   mode is unchanged. `.dark` (toggled on <html> by ThemeContext) swaps in
+   the dark palette. Never redefine a color only inside .dark — always give
+   the light value here on :root first.
+   ────────────────────────────────────────────────────────────────── */
+:root {
+  --c-ink: 28 28 28;
+  --c-ink-muted: 103 103 103;
+  --c-border-soft: 226 232 240;
+  --c-border-light: 236 237 248;
+  --c-border-card: 220 221 230;
+  --c-bg-card: 242 243 255;
+  --c-bg-card-alt: 244 245 255;
+  --c-bg-soft: 255 255 255;
+  --c-bg-page: 255 255 255;
+  --c-surface: 255 255 255;
+  --c-surface-muted: 248 249 250;
+  color-scheme: light;
+}
+
+.dark {
+  --c-ink: 233 234 240;
+  --c-ink-muted: 154 160 173;
+  --c-border-soft: 42 47 58;
+  --c-border-light: 42 47 58;
+  --c-border-card: 51 57 70;
+  --c-bg-card: 30 34 43;
+  --c-bg-card-alt: 34 39 49;
+  --c-bg-soft: 24 27 34;
+  --c-bg-page: 15 17 22;
+  --c-surface: 26 30 38;
+  --c-surface-muted: 33 38 48;
+  color-scheme: dark;
+}
+
 @layer base {
   html { scroll-behavior: smooth; }
   body {
@@ -14,7 +51,7 @@
     line-height: 1.2;
     letter-spacing: -0.02em;
   }
-  hr { border: none; height: 0.5px; background-color: #E2E8F0; }
+  hr { border: none; height: 0.5px; @apply bg-border-soft; }
 }
 
 @layer utilities {
@@ -126,22 +163,43 @@
 .btn-play:hover span { color: #AB1017; }
 
 /* ──────────────────────────────────────────────────────────────────
-   Dashboard nav-item underline (::after) — preserved
+   Dashboard nav-item — pill-tab pattern (Figma dashboard reference):
+   active tab gets a soft rose background + a red bottom border; inactive
+   tabs are muted until hover. The underline-grow animation is preserved
+   as a secondary hover cue. Colors are theme-token-aware for dark mode.
    ────────────────────────────────────────────────────────────────── */
-.dash-link { position: relative; transition: 0.3s; }
+.dash-link {
+  position: relative;
+  transition: 0.25s;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border-bottom: 2px solid transparent;
+}
 .dash-link::after {
   content: "";
   position: absolute;
-  bottom: -6px;
-  left: 0;
+  bottom: -2px;
+  left: 18px;
+  right: 18px;
   width: 0%;
   height: 2px;
   background: #BB181D;
   transition: 0.3s;
 }
-.dash-link:hover::after, .dash-link.active::after { width: 100%; }
+.dash-link:hover::after, .dash-link.active::after { width: calc(100% - 36px); }
 .dash-link:hover { color: #BB181D; }
-.dash-link.active { color: #BB181D; font-weight: 600; font-size: 1.1rem; }
+.dash-link.active {
+  color: #BB181D;
+  font-weight: 600;
+  background: #FAEBEB;
+  border-bottom-color: #BB181D;
+}
+.dark .dash-link.active { background: rgba(229, 89, 91, 0.14); color: #e5595b; box-shadow: 0 0 16px rgba(229, 89, 91, 0.2); }
+
+/* Lets the desktop nav-item track scroll horizontally instead of overflowing
+   the page when there isn't room for every tab (narrower desktop widths). */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* Footer link underline */
 .foot-link { position: relative; transition: 0.3s; }
@@ -336,3 +394,77 @@
 }
 .mobile-nav.active { right: 0; }
 @media (max-width: 480px) { .mobile-nav { max-width: 100%; } }
+
+/* ──────────────────────────────────────────────────────────────────
+   DARK MODE OVERRIDES for surfaces defined with hardcoded light colors
+   above (kept here so the base rules stay untouched).
+   ────────────────────────────────────────────────────────────────── */
+.dark .mobile-nav { background: rgb(24 27 34); box-shadow: -10px 0 40px rgba(0,0,0,0.5); }
+.dark .dashboard-navbar-bottom .dashboard-container { background: rgba(24, 27, 34, 0.95); }
+.dark .faq-answer { background: rgb(26 30 38); }
+.dark .flash-front, .dark .flash-back { background: rgb(26 30 38); color: rgb(233 234 240); }
+.dark .flash-back { color: #e5595b; }
+.dark .answer.correct { background: rgba(16,185,129,0.18) !important; }
+.dark .answer.wrong { background: rgba(239,68,68,0.18) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   SKELETON LOADING (shimmer sweep) — replaces flat animate-pulse
+   placeholders. Theme-token-based so it reads correctly in both modes.
+   ────────────────────────────────────────────────────────────────── */
+@keyframes skeleton-sweep {
+  0% { background-position: -150% 0; }
+  100% { background-position: 150% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    rgb(var(--c-surface-muted)) 30%,
+    rgb(var(--c-bg-card)) 50%,
+    rgb(var(--c-surface-muted)) 70%
+  );
+  background-size: 250% 100%;
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+
+/* Content entrance — a soft fade + rise, applied to a grid/list container.
+   Direct children stagger in one after another (nth-child delay steps) so a
+   page of cards reads as composed rather than dumped on screen instantly. */
+@keyframes reveal-up-fade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger-children > * {
+  animation: reveal-up-fade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-children > *:nth-child(9) { animation-delay: 320ms; }
+.stagger-children > *:nth-child(n+10) { animation-delay: 360ms; }
+
+/* Respect reduced-motion preferences for both new effects. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  .stagger-children > * { animation: none; }
+}
+
+/* Branded full-screen loader (auth resolving) — a gently breathing logo mark
+   instead of a generic spinner, plus three sequenced dots. */
+@keyframes brand-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes brand-dot {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+.brand-loader-mark { animation: brand-breathe 1.8s ease-in-out infinite; }
+.brand-loader-dot { animation: brand-dot 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader-mark, .brand-loader-dot { animation: none; }
+}

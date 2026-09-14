@@ -1,6 +1,15 @@
 /** @type {import('tailwindcss').Config} */
+
+// Semantic surface/text/border tokens resolve to CSS variables (RGB channel
+// triples defined in src/index.css under :root and .dark). This keeps opacity
+// utilities working (e.g. bg-bg-soft/60) AND makes every existing usage of these
+// tokens theme-aware with zero per-component edits. Brand `primary` colors stay
+// static — the red reads well on both light and dark grounds.
+const withVar = (name) => `rgb(var(${name}) / <alpha-value>)`
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -13,15 +22,19 @@ export default {
         'primary-accent': '#CE2026',
         'primary-glow': '#FFBCBC',
         'primary-rose': '#B07076',
-        ink: '#1C1C1C',
-        'ink-muted': '#676767',
-        'border-soft': '#E2E8F0',
-        'border-light': '#ECEDF8',
-        'border-card': '#DCDDE6',
-        'bg-card': '#F2F3FF',
-        'bg-card-alt': '#F4F5FF',
-        'bg-soft': '#FFFFFF',
-        'bg-page': '#FFFFFF',
+        ink: withVar('--c-ink'),
+        'ink-muted': withVar('--c-ink-muted'),
+        'border-soft': withVar('--c-border-soft'),
+        'border-light': withVar('--c-border-light'),
+        'border-card': withVar('--c-border-card'),
+        'bg-card': withVar('--c-bg-card'),
+        'bg-card-alt': withVar('--c-bg-card-alt'),
+        'bg-soft': withVar('--c-bg-soft'),
+        'bg-page': withVar('--c-bg-page'),
+        // `surface` = the neutral card/panel surface used by new components;
+        // maps to white in light mode and an elevated slate in dark mode.
+        surface: withVar('--c-surface'),
+        'surface-muted': withVar('--c-surface-muted'),
         'footer-bg': '#4B0B05',
         'footer-text': '#B7B7B7'
       },

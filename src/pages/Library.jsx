@@ -1,119 +1,201 @@
 import { useEffect, useMemo, useState } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
-import { db } from '../firebase.js'
+import FavoriteButton from '../components/FavoriteButton.jsx'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { useLang } from '../contexts/LangContext.jsx'
+import { useFavorites } from '../contexts/FavoritesContext.jsx'
+import { streamLabel } from '../constants/streams.js'
+import { getSubjects } from '../services/academic.js'
+import { getResources } from '../services/content.js'
+import { PageHeader, SubjectCard, EmptyState, Spinner, LoadingGrid, StatusBadge } from '../components/ui/kit.jsx'
+import Icon from '../components/ui/Icon.jsx'
+
+// Library sidebar sections, matching the platform's Figma reference (Overview /
+// My Saves / My Resumes / My Flashcards / My Tests / My Teachers). 'overview',
+// 'saves' and 'resumes' render inline (real data, fetched on demand); the rest
+// navigate to their dedicated flow — quizzes/flashcards need a subject picked
+// first (see Games.jsx) and Teachers has its own full page. (Figma's "My Books"
+// isn't a distinct content type in this data model, so it isn't duplicated here
+// as a second identical tab — see UnitView/Resources for the real content.)
+const FAV_TYPE_LABEL = { resource: 'resources', quiz: 'quizzes', flashcard: 'flashcards', teacher: 'teachers' }
+
+const SECTIONS = [
+  { id: 'overview', labelKey: 'subjects', mode: 'inline' },
+  { id: 'saves', labelKey: 'nav-favorites', mode: 'inline' },
+  { id: 'resumes', labelKey: 'resources', mode: 'inline' },
+  { id: 'flashcards', labelKey: 'flashcards', mode: 'link', to: '/flashcard-decks' },
+  { id: 'tests', labelKey: 'quizzes', mode: 'link', to: '/quizzes' },
+  { id: 'courses', labelKey: 'video-courses', mode: 'link', to: '/courses' },
+  { id: 'teachers', labelKey: 'nav-teachers', mode: 'link', to: '/teachers' }
+]
 
 export default function Library() {
-  const [resources, setResources] = useState([])
-  const [activeSubject, setActiveSubject] = useState('all')
+  const navigate = useNavigate()
+  const { stream } = useAuth()
+  const { t, lang, dir } = useLang()
+  const { favorites, loading: favLoading } = useFavorites()
+  const [section, setSection] = useState('overview')
+
+  const [subjects, setSubjects] = useState([])
+  const [subjLoading, setSubjLoading] = useState(true)
+  const [subjError, setSubjError] = useState('')
   const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+
+  const [resources, setResources] = useState([])
+  const [resLoading, setResLoading] = useState(false)
+  const [resError, setResError] = useState('')
+  const [resFetched, setResFetched] = useState(false)
 
   useEffect(() => {
-    async function load() {
-      try {
-        const snap = await getDocs(collection(db, 'resources'))
-        setResources(snap.docs.map((d) => d.data()))
-      } catch (e) {
-        setError(e.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
+    let cancelled = false
+    setSubjLoading(true)
+    getSubjects(stream)
+      .then((s) => { if (!cancelled) setSubjects(s.filter((x) => x.status !== 'ARCHIVED')) })
+      .catch((e) => { if (!cancelled) setSubjError(e.message) })
+      .finally(() => { if (!cancelled) setSubjLoading(false) })
+    return () => { cancelled = true }
+  }, [stream])
 
-  const subjects = useMemo(() => {
-    const s = new Set()
-    resources.forEach((r) => r.subject && s.add(r.subject))
-    return Array.from(s)
-  }, [resources])
+  // Resources are only fetched once the resources-backed tab is actually opened.
+  useEffect(() => {
+    if (section !== 'resumes' || resFetched) return
+    let cancelled = false
+    setResLoading(true)
+    getResources(stream)
+      .then((r) => { if (!cancelled) { setResources(r); setResFetched(true) } })
+      .catch((e) => { if (!cancelled) setResError(e.message) })
+      .finally(() => { if (!cancelled) setResLoading(false) })
+    return () => { cancelled = true }
+  }, [section, stream, resFetched])
 
-  const filtered = useMemo(() => {
-    let out = resources
-    if (activeSubject !== 'all') out = out.filter((r) => r.subject === activeSubject)
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      out = out.filter((r) => (r.title || '').toLowerCase().includes(q) || (r.subject || '').toLowerCase().includes(q))
-    }
-    return out
-  }, [resources, activeSubject, search])
+  const visibleSubjects = useMemo(() => {
+    if (!search.trim()) return subjects
+    const q = search.toLowerCase()
+    return subjects.filter((s) => (s.name || '').toLowerCase().includes(q))
+  }, [subjects, search])
+
+  function selectSection(sec) {
+    if (sec.mode === 'link') { navigate(sec.to); return }
+    setSection(sec.id)
+  }
 
   return (
-    <div style={{ fontFamily: 'Outfit, sans-serif' }}>
+    <div dir={dir}>
       <DashboardNavbar />
+      <div className="max-w-container mx-auto px-5 mt-[110px] max-md:mt-6 pb-16">
+        <PageHeader title={t('library')} subtitle={stream ? streamLabel(stream, lang) : ''} />
 
-      <section className="flex flex-col items-center mt-[90px] text-center max-md:mt-5">
-        <img src="/assets/images/illustration.svg" alt="Illustration" className="max-w-full h-auto max-md:max-w-[80%]" />
-        <h2 className="mt-4 text-ez-3xl">Academic Resource Hub</h2>
-        <div className="mt-4 max-md:px-3.5 max-md:w-full">
-          <input
-            type="text"
-            placeholder="Search resources..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-[479px] h-[59px] px-4 border border-primary-dark rounded-[30px] text-ez-sm max-md:w-full max-md:max-w-full max-md:h-12 max-md:text-[0.9rem] outline-none"
-          />
+        {/* Mobile: horizontal section chips. Desktop: sticky sidebar (below). */}
+        <div className="flex lg:hidden gap-2 overflow-x-auto no-scrollbar pb-4 mb-2 -mx-1 px-1">
+          {SECTIONS.map((sec) => (
+            <button
+              key={sec.id}
+              onClick={() => selectSection(sec)}
+              className={`shrink-0 h-9 px-4 rounded-[12px] text-sm transition whitespace-nowrap
+                          ${section === sec.id && sec.mode === 'inline'
+                            ? 'bg-primary-soft text-primary-strong dark:bg-primary/15 dark:text-primary-glow'
+                            : 'border border-border-soft bg-surface text-ink hover:bg-surface-muted'}`}
+            >
+              {t(sec.labelKey)}
+            </button>
+          ))}
         </div>
-      </section>
 
-      <div className="flex flex-wrap gap-2 justify-center mt-6 max-md:px-3.5">
-        <button
-          onClick={() => setActiveSubject('all')}
-          className={`flex items-center gap-2 h-11 px-[25px] rounded-[15px] cursor-pointer text-base transition ${
-            activeSubject === 'all' ? 'border-0 bg-primary-pale text-primary-strong' : 'border border-border-soft bg-white text-ink hover:bg-[#f9f9f9]'
-          } max-md:h-[38px] max-md:px-3.5 max-md:text-[0.85rem]`}
-        >
-          All
-        </button>
-        {subjects.map((s) => (
-          <button
-            key={s}
-            onClick={() => setActiveSubject(s)}
-            className={`flex items-center gap-2 h-11 px-[25px] rounded-[15px] cursor-pointer text-base transition ${
-              activeSubject === s ? 'border-0 bg-primary-pale text-primary-strong' : 'border border-border-soft bg-white text-ink hover:bg-[#f9f9f9]'
-            } max-md:h-[38px] max-md:px-3.5 max-md:text-[0.85rem]`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-
-      <hr className="opacity-10 my-[30px] mx-0" />
-
-      <div className="ez-container grid grid-cols-4 gap-5 mt-10 max-lg:grid-cols-2 max-[600px]:grid-cols-1 max-md:px-3.5">
-        {loading ? (
-          <p className="text-center w-full p-[100px] col-span-full">Fetching resources...</p>
-        ) : error ? (
-          <p className="text-center w-full col-span-full">Error loading resources: {error}</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-center w-full col-span-full">No resources found.</p>
-        ) : (
-          filtered.map((res, i) => (
-            <div key={i} className="course-card flex flex-col justify-between bg-white border border-border-soft rounded-[30px] p-[25px] min-h-[220px] hover:-translate-y-1.5 hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)]">
-              <div>
-                <div className="text-[40px] mb-[15px]">{res.type === 'drive' ? '📂' : '🎥'}</div>
-                <span
-                  className="text-base inline-block py-1 px-2.5 rounded-[20px]"
-                  style={{
-                    background: res.type === 'drive' ? '#e3f2fd' : '#fff0f0',
-                    color: res.type === 'drive' ? '#1e88e5' : '#BB181D'
-                  }}
+        <div className="flex gap-6 items-start">
+          {/* Desktop sidebar */}
+          <aside className="hidden lg:block w-[220px] shrink-0 sticky top-[130px] bg-surface border border-border-soft rounded-2xl p-3">
+            <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t('library')}</p>
+            <nav className="flex flex-col gap-1">
+              {SECTIONS.map((sec) => (
+                <button
+                  key={sec.id}
+                  onClick={() => selectSection(sec)}
+                  className={`text-start px-3 py-2 rounded-xl text-sm font-medium transition-colors
+                              ${section === sec.id && sec.mode === 'inline'
+                                ? 'bg-primary-soft text-primary-strong dark:bg-primary/15 dark:text-primary-glow'
+                                : 'text-ink hover:bg-surface-muted'}`}
                 >
-                  {res.subject}
-                </span>
-                <h4 className="my-[15px] text-ez-xl">{res.title}</h4>
-              </div>
-              <button
-                onClick={() => window.open(res.url, '_blank')}
-                className="mt-2.5 w-full bg-primary text-white border-0 rounded-pill font-medium px-8 py-2.5 cursor-pointer hover:shadow-[0_10px_25px_rgba(171,16,23,0.3)]"
-              >
-                Open Resource
-              </button>
-            </div>
-          ))
-        )}
+                  {t(sec.labelKey)}
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {section === 'overview' && (
+              <>
+                <input
+                  type="text"
+                  placeholder={t('search')}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full max-w-md h-12 px-4 rounded-xl border border-border-card bg-surface text-ink outline-none focus:border-primary mb-5"
+                />
+                {subjLoading ? <LoadingGrid count={6} className="grid-cols-3 max-md:grid-cols-2 max-[520px]:grid-cols-1" />
+                  : subjError ? <EmptyState icon={<Icon name="warning" />} title={t('err-generic')} description={subjError} />
+                  : visibleSubjects.length === 0 ? (
+                    <EmptyState
+                      icon={<Icon name="book" />}
+                      title={t('no-subjects-title')}
+                      description={t('no-subjects-desc')}
+                      action={<button onClick={() => navigate('/resources')} className="px-5 py-2.5 rounded-pill bg-primary text-white font-semibold hover:bg-primary-strong transition-colors">{t('explore-library')}</button>}
+                    />
+                  ) : (
+                    <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
+                      {visibleSubjects.map((s) => (
+                        <SubjectCard key={s.id} name={s.name} onClick={() => navigate(`/library/subject/${s.id}`)} />
+                      ))}
+                    </div>
+                  )}
+              </>
+            )}
+
+            {section === 'saves' && (
+              favLoading ? <Spinner label={t('loading')} />
+                : favorites.length === 0 ? (
+                  <EmptyState icon="⭐" title={t('no-favorites-title')} description={t('no-favorites-desc')}
+                    action={<button onClick={() => navigate('/favorites')} className="px-5 py-2.5 rounded-pill bg-primary text-white font-semibold hover:bg-primary-strong transition-colors">{t('nav-favorites')}</button>} />
+                ) : (
+                  <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
+                    {favorites.map((fav) => (
+                      <div key={fav.id} className="flex flex-col bg-surface border border-border-soft rounded-2xl p-4">
+                        <div className="flex items-start justify-between">
+                          <StatusBadge tone="primary">{t(FAV_TYPE_LABEL[fav.type] || 'content')}</StatusBadge>
+                          <FavoriteButton item={{ type: fav.type, contentId: fav.contentId, title: fav.title, subjectId: fav.subjectId, unitId: fav.unitId, stream: fav.stream }} />
+                        </div>
+                        <h4 className="mt-2 font-heading font-bold text-ink line-clamp-2">{fav.title || t('content')}</h4>
+                      </div>
+                    ))}
+                  </div>
+                )
+            )}
+
+            {section === 'resumes' && (
+              resLoading ? <Spinner label={t('loading')} />
+                : resError ? <EmptyState icon={<Icon name="warning" />} title={t('err-generic')} description={resError} />
+                : resources.length === 0 ? <EmptyState icon={<Icon name="folder" />} title={t('no-content-title')} description={t('no-content-desc')} />
+                : (
+                  <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
+                    {resources.map((res) => (
+                      <div key={res.id} className="flex flex-col justify-between bg-surface border border-border-soft rounded-2xl p-4 min-h-[160px]">
+                        <div>
+                          <div className="flex items-start justify-between">
+                            <span className="w-9 h-9 shrink-0 rounded-lg bg-surface-muted flex items-center justify-center text-ink-muted"><Icon name={res.type === 'drive' ? 'folder' : 'video'} className="w-[18px] h-[18px]" /></span>
+                            <FavoriteButton item={{ type: 'resource', contentId: res.id, title: res.title, subjectId: res.subjectId, unitId: res.unitId, stream: res.stream }} />
+                          </div>
+                          {res.subject && <StatusBadge tone="neutral">{res.subject}</StatusBadge>}
+                          <h4 className="mt-2 font-heading font-bold text-ink line-clamp-2">{res.title}</h4>
+                        </div>
+                        <button onClick={() => window.open(res.url, '_blank', 'noopener')} className="mt-3 text-sm font-semibold text-primary hover:underline text-start">{t('start')} →</button>
+                      </div>
+                    ))}
+                  </div>
+                )
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

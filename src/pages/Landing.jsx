@@ -80,7 +80,7 @@ export default function Landing() {
             </h1>
             <div className="mt-[94px] max-md:mt-[30px] flex items-center gap-5 max-md:flex-col max-md:items-stretch max-md:gap-4">
               <Link
-                to="/home"
+                to="/library"
                 className="btn-reactive glow-btn inline-flex items-center justify-center bg-primary text-white rounded-pill text-ez-lg font-medium px-8 py-4 h-[59px] no-underline hover:shadow-[0_10px_25px_rgba(171,16,23,0.3)] max-md:w-full"
               >
                 {t('get-started')}

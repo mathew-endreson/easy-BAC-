@@ -1,0 +1,154 @@
+rules_version = '2';
+
+// ============================================================================
+// EZBAC Firestore Security Rules
+// ----------------------------------------------------------------------------
+// Security model:
+//  • Authorization is enforced server-side here, never trusted from the client.
+//  • A student can NEVER become super_admin from the browser: on create the role
+//    is pinned to 'student', and on update the role field is immutable. The only
+//    way to mint a super admin is out-of-band (Firebase Console / Admin SDK) —
+//    manually set users/{uid}.role = 'super_admin' for the owner account.
+//  • Educational content is world-writable to NOBODY except admins; any signed-in
+//    student may read it (per-stream visibility is applied client-side; see the
+//    commented "strict per-stream read" variant below to harden it once every
+//    content query is constrained by stream).
+//  • Each student's private data (profile, progress, favorites, tasks, study
+//    plans, support tickets) is readable/writable only by that student (admins
+//    may read for support/analytics). Audit logs are admin-only.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // Privileged get() — NOT subject to these rules, so it is safe to read the
+    // caller's own user doc to determine admin status.
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+    }
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // ---- users ------------------------------------------------------------
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // First-time profile creation: caller owns the doc, role is forced to
+      // 'student', and the profile starts incomplete.
+      allow create: if isOwner(uid)
+        && request.resource.data.role == 'student'
+        && request.resource.data.profileCompleted == false;
+
+      // Self-updates may not change role, email or the admin-controlled
+      // `disabled` flag (a student could otherwise re-enable their own account);
+      // admins may update anything.
+      allow update: if isAdmin()
+        || (isOwner(uid) && unchanged('role') && unchanged('email') && unchanged('disabled'));
+
+      allow delete: if isAdmin();
+
+      // Private per-student subcollections — owner full access, admin read-only.
+      match /progress/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if isOwner(uid);
+      }
+      match /favorites/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if isOwner(uid);
+      }
+      match /tasks/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if isOwner(uid);
+      }
+      match /studyPlans/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if isOwner(uid);
+      }
+      match /activity/{docId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if isOwner(uid);
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ---- educational content ---------------------------------------------
+    // Read: any signed-in user. Write: super admins only (closes the previously
+    // open database where anyone could edit quizzes/flashcards/resources).
+    match /quizzes/{id}      { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /flashcards/{id}   { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /resources/{id}    { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /courses/{id}      { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /subjects/{id}     { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /units/{id}        { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /lessons/{id}      { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /streams/{id}      { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    // Teachers are admin-managed content-provider records — NOT authenticated
+    // users. They (and their video courses/videos) are readable by students,
+    // writable only by super admins.
+    match /teachers/{id}     { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /videoCourses/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /videos/{id}       { allow read: if isSignedIn(); allow write: if isAdmin(); }
+
+    // ---- support tickets --------------------------------------------------
+    // Students create + read their own; admins read/write all. `userId` on the
+    // doc must match the creator so tickets can't be spoofed onto other users.
+    match /supportTickets/{id} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      // Students may append a reply/close their own ticket but not reassign it;
+      // admins may update status/responses freely.
+      allow update: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid
+            && request.resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ---- audit logs -------------------------------------------------------
+    // Admin-only. Students can neither read nor write.
+    match /auditLogs/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false; // logs are append-only
+    }
+
+    // ---- platform settings ------------------------------------------------
+    match /settings/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Default deny for anything not matched above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// STRICT PER-STREAM READ (enable in Phase 3, after every content list query is
+// constrained by the student's stream, e.g. where('stream','in',[myStream,''])):
+//
+//   function userStream() {
+//     return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.bacStream;
+//   }
+//   match /quizzes/{id} {
+//     allow read: if isAdmin()
+//       || (isSignedIn() && (resource.data.stream == '' || resource.data.stream == userStream()));
+//     allow write: if isAdmin();
+//   }
+//
+// With this, an unfiltered getDocs(collection('quizzes')) is REJECTED unless the
+// client query only requests docs the student is allowed to see.
+// ----------------------------------------------------------------------------

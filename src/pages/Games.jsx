@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, getDocs } from 'firebase/firestore'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
-import { db } from '../firebase.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { getQuizzes, getFlashcards, getResources } from '../services/content.js'
 
 export default function Games() {
   const navigate = useNavigate()
+  const { stream } = useAuth()
   const [catalog, setCatalog] = useState([])
   const [activeFilter, setActiveFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -13,29 +14,34 @@ export default function Games() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    let cancelled = false
     async function load() {
+      setLoading(true)
       try {
-        const [quizSnap, flashSnap, resSnap] = await Promise.all([
-          getDocs(collection(db, 'quizzes')),
-          getDocs(collection(db, 'flashcards')),
-          getDocs(collection(db, 'resources'))
+        // Only content visible to the student's BAC stream.
+        const [quizzes, flashcards, resources] = await Promise.all([
+          getQuizzes(stream),
+          getFlashcards(stream),
+          getResources(stream)
         ])
+        if (cancelled) return
         const entries = new Set()
-        quizSnap.forEach((d) => entries.add(`${d.data().subject}|quiz`))
-        flashSnap.forEach((d) => entries.add(`${d.data().subject}|flashcard`))
-        resSnap.forEach((d) => entries.add(`${d.data().subject}|resource`))
+        quizzes.forEach((d) => entries.add(`${d.subject}|quiz`))
+        flashcards.forEach((d) => entries.add(`${d.subject}|flashcard`))
+        resources.forEach((d) => entries.add(`${d.subject}|resource`))
         setCatalog(Array.from(entries).map((e) => {
           const [subject, type] = e.split('|')
           return { subject, type }
         }))
       } catch (e) {
-        setError(e.message)
+        if (!cancelled) setError(e.message)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     load()
-  }, [])
+    return () => { cancelled = true }
+  }, [stream])
 
   const visible = useMemo(() => {
     let out = catalog
@@ -50,9 +56,11 @@ export default function Games() {
   function openSubject(subject, type) {
     if (type === 'quiz') {
       localStorage.setItem('selectedQuizSubject', subject)
+      localStorage.removeItem('selectedQuizId') // subject-wide, not a specific quiz
       navigate('/quiz')
     } else if (type === 'flashcard') {
       localStorage.setItem('selectedFlashSubject', subject)
+      localStorage.removeItem('selectedFlashUnit') // subject-wide, not a unit
       navigate('/flashcard')
     } else {
       navigate('/library')
@@ -79,7 +87,7 @@ export default function Games() {
             placeholder="Find quizzes or flashcards..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-[479px] h-[59px] px-4 border border-primary-dark rounded-[30px] text-ez-sm max-md:w-full max-md:max-w-full max-md:h-12 max-md:text-[0.9rem] outline-none"
+            className="w-[479px] h-[59px] px-4 border border-primary-dark rounded-[30px] text-ez-sm bg-surface text-ink outline-none max-md:w-full max-md:max-w-full max-md:h-12 max-md:text-[0.9rem]"
           />
         </div>
       </section>
@@ -90,7 +98,7 @@ export default function Games() {
             key={f}
             onClick={() => setActiveFilter(f)}
             className={`flex items-center gap-2 h-11 px-[25px] rounded-[15px] cursor-pointer text-base transition ${
-              activeFilter === f ? 'border-0 bg-primary-pale text-primary-strong' : 'border border-border-soft bg-white text-ink hover:bg-[#f9f9f9]'
+              activeFilter === f ? 'border-0 bg-primary-pale text-primary-strong dark:bg-primary/15 dark:text-primary-glow' : 'border border-border-soft bg-surface text-ink hover:bg-surface-muted'
             } max-md:h-[38px] max-md:px-3.5 max-md:text-[0.85rem]`}
           >
             {f === 'all' ? 'All' : f === 'quiz' ? 'Quizzes' : 'Flashcards'}
@@ -112,7 +120,7 @@ export default function Games() {
             <div
               key={`${c.subject}-${c.type}-${i}`}
               onClick={() => openSubject(c.subject, c.type)}
-              className="course-card bg-white border border-border-soft rounded-[30px] p-5 flex flex-col min-h-[220px] cursor-pointer hover:-translate-y-1.5 hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)]"
+              className="course-card bg-surface text-ink border border-border-soft rounded-[30px] p-5 flex flex-col min-h-[220px] cursor-pointer hover:-translate-y-1.5 hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)]"
             >
               <div className="flex justify-center"><img src={iconFor(c.type)} alt="" className="h-10" /></div>
               <div className="flex gap-2 mt-[30px]">

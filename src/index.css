@@ -251,14 +251,6 @@
 }
 .flash-back { transform: rotateY(180deg); color: #BB181D; }
 
-/* ──────────────────────────────────────────────────────────────────
-   Horizontal cards scroll
-   ────────────────────────────────────────────────────────────────── */
-.horizontal-courses { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; }
-.horizontal-courses > * { min-width: 250px; flex-shrink: 0; }
-.horizontal-courses::-webkit-scrollbar { height: 6px; }
-.horizontal-courses::-webkit-scrollbar-thumb { background: #f0ecec; border-radius: 10px; }
-
 /* Todo list scrollbar */
 .todo-list-scroll { max-height: 400px; overflow-y: auto; padding-right: 5px; }
 .todo-list-scroll::-webkit-scrollbar { width: 4px; }
@@ -364,7 +356,6 @@
     line-height: 1.2;
     white-space: nowrap;
   }
-  .dashboard-navbar-bottom .dash-link img { width: 20px; height: 20px; }
   .dashboard-navbar-bottom .dash-link::after { display: none; }
   .dashboard-navbar-bottom .dash-link.active { font-size: 10px !important; color: #BB181D; }
   body.has-bottom-tab { padding-bottom: 70px; }

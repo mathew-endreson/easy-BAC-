@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
 import { getUnitById } from '../services/academic.js'
 import { getByUnitForStream } from '../services/content.js'
-import { PageHeader, SectionHeader, EmptyState, Spinner, StatusBadge } from '../components/ui/kit.jsx'
+import { PageHeader, SectionHeader, EmptyState, Spinner } from '../components/ui/kit.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
 // A unit's content, grouped into categories (Resources/Summaries, Quiz, Flashcards).

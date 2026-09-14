@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
 import { getPublishedCourses } from '../services/courses.js'
 import { getTeachers } from '../services/academic.js'
-import { PageHeader, EmptyState, LoadingGrid, StatusBadge } from '../components/ui/kit.jsx'
+import { PageHeader, EmptyState, LoadingGrid } from '../components/ui/kit.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
 // Student video-course catalogue: only PUBLISHED courses matching the

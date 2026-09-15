@@ -63,6 +63,7 @@ export function AuthProvider({ children }) {
       bacStream: '',
       role: 'student',
       profileCompleted: false,
+      disabled: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     }
@@ -123,6 +124,7 @@ export function AuthProvider({ children }) {
       bacStream: '',
       role: 'student',
       profileCompleted: false,
+      disabled: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     }, { merge: true })

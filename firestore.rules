@@ -35,8 +35,11 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
     }
+    // Uses .get() with a default instead of direct indexing: docs created
+    // before a field existed (e.g. `disabled`) don't have every key set, and
+    // indexing a missing key throws, which would deny the whole update.
     function unchanged(field) {
-      return request.resource.data[field] == resource.data[field];
+      return request.resource.data.get(field, null) == resource.data.get(field, null);
     }
 
     // ---- users ------------------------------------------------------------

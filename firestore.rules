@@ -35,8 +35,13 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
     }
+    // Bracket/dot access on a map key that doesn't exist throws in rules
+    // (not "undefined") — which fails the whole condition. New profiles never
+    // set `disabled`, so a plain `request.resource.data[field] == resource.data[field]`
+    // errors out on every student self-update. `.get(field, null)` treats a
+    // missing field as null on both sides instead of erroring.
     function unchanged(field) {
-      return request.resource.data[field] == resource.data[field];
+      return request.resource.data.get(field, null) == resource.data.get(field, null);
     }
 
     // ---- users ------------------------------------------------------------

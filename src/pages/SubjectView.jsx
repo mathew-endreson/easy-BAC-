@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
@@ -41,8 +41,7 @@ export default function SubjectView() {
     <div dir={dir}>
       <DashboardNavbar />
       <div className="max-w-container mx-auto px-5 mt-[110px] max-md:mt-6 pb-16">
-        <Link to="/library" className="text-sm text-ink-muted hover:text-primary no-underline">← {t('library')}</Link>
-        <PageHeader title={subject?.name || t('subjects')} subtitle={t('units')} />
+        <PageHeader title={subject?.name || t('subjects')} subtitle={t('units')} back="/library" />
 
         {loading ? <LoadingGrid count={6} className="grid-cols-3 max-md:grid-cols-2 max-[520px]:grid-cols-1" />
           : units.length === 0 ? <EmptyState icon={<Icon name="inbox" />} title={t('no-content-title')} description={t('no-content-desc')} />

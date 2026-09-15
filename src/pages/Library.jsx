@@ -84,7 +84,7 @@ export default function Library() {
     <div dir={dir}>
       <DashboardNavbar />
       <div className="max-w-container mx-auto px-5 mt-[110px] max-md:mt-6 pb-16">
-        <PageHeader title={t('library')} subtitle={stream ? streamLabel(stream, lang) : ''} />
+        <PageHeader title={t('library')} subtitle={stream ? streamLabel(stream, lang) : ''} back={false} />
 
         {/* Mobile: horizontal section chips. Desktop: sticky sidebar (below). */}
         <div className="flex lg:hidden gap-2 overflow-x-auto no-scrollbar pb-4 mb-2 -mx-1 px-1">
@@ -145,7 +145,7 @@ export default function Library() {
                   ) : (
                     <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
                       {visibleSubjects.map((s) => (
-                        <SubjectCard key={s.id} name={s.name} onClick={() => navigate(`/library/subject/${s.id}`)} />
+                        <SubjectCard key={s.id} name={s.name} coverURL={s.coverURL} onClick={() => navigate(`/library/subject/${s.id}`)} />
                       ))}
                     </div>
                   )}

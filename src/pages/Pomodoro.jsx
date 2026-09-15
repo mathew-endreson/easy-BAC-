@@ -3,12 +3,13 @@ import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
 import { usePomodoro, formatDuration } from '../contexts/PomodoroContext.jsx'
 import { useTodos } from '../contexts/TodoContext.jsx'
+import Icon from '../components/ui/Icon.jsx'
 
 // Full Pomodoro page. All timer + todo state now comes from the global
 // PomodoroProvider / TodoProvider, so it stays in sync with the floating widget
 // and survives navigation, refresh, language and theme changes.
 export default function Pomodoro() {
-  const { t } = useLang()
+  const { t, dir } = useLang()
   const { mode, setMode, remaining, isRunning, toggle, reset, modes, setMuted: setPomoMuted } = usePomodoro()
   const { tasks, addTask, toggleTask, deleteTask, loading } = useTodos()
   const [todoInput, setTodoInput] = useState('')
@@ -27,7 +28,7 @@ export default function Pomodoro() {
   }
 
   return (
-    <>
+    <div dir={dir}>
       <DashboardNavbar />
 
       <div className="mt-[100px] flex p-6 gap-6 max-lg:flex-col max-md:mt-5 max-md:p-3.5">
@@ -41,10 +42,11 @@ export default function Pomodoro() {
                 <button
                   onClick={toggleMute}
                   aria-pressed={muted}
-                  title={muted ? 'Unmute' : 'Mute'}
-                  className={`w-[43px] h-[43px] border-0 rounded-full p-2.5 cursor-pointer ${muted ? 'bg-surface-muted opacity-60' : 'bg-primary-soft'}`}
+                  aria-label={muted ? t('unmute') : t('mute')}
+                  title={muted ? t('unmute') : t('mute')}
+                  className={`w-11 h-11 flex items-center justify-center border-0 rounded-full cursor-pointer text-primary-strong ${muted ? 'bg-surface-muted opacity-60' : 'bg-primary-soft'}`}
                 >
-                  <img src="/assets/icons/sound.svg" alt="sound" />
+                  <Icon name={muted ? 'volumeMute' : 'volume'} className="w-[18px] h-[18px]" />
                 </button>
               </div>
             </div>
@@ -68,11 +70,13 @@ export default function Pomodoro() {
             </div>
 
             <div className="relative z-10 mt-6 flex gap-4 max-md:mt-5">
-              <button onClick={toggle} className={`h-[38px] px-[25px] border-0 rounded-[20px] cursor-pointer ${isRunning ? 'bg-[#ffc1c5]' : 'bg-primary-accent'}`}>
-                <img src={isRunning ? '/assets/icons/pause.svg' : '/assets/icons/play.svg'} alt={isRunning ? 'pause' : 'play'} />
+              <button onClick={toggle} aria-label={isRunning ? 'pause' : 'play'}
+                className={`min-h-11 px-7 flex items-center justify-center border-0 rounded-pill cursor-pointer ${isRunning ? 'bg-[#ffc1c5] text-primary-deep' : 'bg-primary-accent text-white'}`}>
+                <Icon name={isRunning ? 'pause' : 'play'} className="w-4 h-4" />
               </button>
-              <button onClick={reset} className="h-[38px] px-[25px] border border-primary-deep dark:border-border-card bg-transparent rounded-[20px] cursor-pointer">
-                <img src="/assets/icons/reset.svg" alt="reset" />
+              <button onClick={reset} aria-label="reset"
+                className="min-h-11 px-7 flex items-center justify-center border border-primary-deep dark:border-border-card bg-transparent rounded-pill cursor-pointer text-primary-deep dark:text-ink">
+                <Icon name="refresh" className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -93,8 +97,8 @@ export default function Pomodoro() {
                 placeholder={t('add-task')}
                 className="flex-1 h-[47px] rounded-xl border border-border-card bg-surface text-ink px-4 outline-none font-body focus:border-primary"
               />
-              <button onClick={submitTodo} className="w-[47px] h-[47px] rounded-xl bg-primary-soft border-0 cursor-pointer flex items-center justify-center hover:bg-primary [&:hover>img]:invert">
-                <img src="/assets/icons/add.svg" alt="add" />
+              <button onClick={submitTodo} aria-label={t('add-task')} className="w-11 h-11 shrink-0 rounded-xl bg-primary-soft text-primary-strong border-0 cursor-pointer flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+                <Icon name="plus" className="w-[18px] h-[18px]" />
               </button>
             </div>
 
@@ -112,7 +116,9 @@ export default function Pomodoro() {
                       {todo.completed ? '✓' : ''}
                     </div>
                     <div className={`flex-1 text-[15px] ${todo.completed ? 'line-through text-ink-muted' : 'text-ink'}`}>{todo.text}</div>
-                    <button onClick={() => deleteTask(todo)} className="bg-transparent border-0 text-border-card text-lg cursor-pointer hover:text-primary">✕</button>
+                    <button onClick={() => deleteTask(todo)} aria-label="delete" className="w-8 h-8 shrink-0 flex items-center justify-center bg-transparent border-0 text-ink-muted cursor-pointer hover:text-primary transition-colors">
+                      <Icon name="close" className="w-4 h-4" />
+                    </button>
                   </div>
                 ))
               )}
@@ -120,6 +126,6 @@ export default function Pomodoro() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

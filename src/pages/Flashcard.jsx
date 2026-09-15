@@ -2,16 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { useLang } from '../contexts/LangContext.jsx'
 import { getBySubjectForStream, getByUnitForStream } from '../services/content.js'
 import { getDeckCards } from '../services/decks.js'
 import { recordFlashcardSession } from '../services/progress.js'
-import { Spinner } from '../components/ui/kit.jsx'
+import { Spinner, BackLink, EmptyState } from '../components/ui/kit.jsx'
+import Icon from '../components/ui/Icon.jsx'
 
 const MOOD_EMOJI = ['😞', '🙁', '😐', '🙂', '😀']
 
 export default function Flashcard() {
   const navigate = useNavigate()
   const { user, stream } = useAuth()
+  const { t, dir } = useLang()
   const subject = localStorage.getItem('selectedFlashSubject') || 'Physics'
   const [cards, setCards] = useState([])
   const [deckMeta, setDeckMeta] = useState(null) // set only for a real deck-play session (progress-trackable)
@@ -130,84 +133,88 @@ export default function Flashcard() {
 
   if (loading) {
     return (
-      <div>
+      <div dir={dir}>
         <DashboardNavbar />
-        <Spinner label="Loading deck…" />
+        <div className="pt-[100px] max-md:pt-6"><Spinner label={t('loading-deck')} /></div>
       </div>
     )
   }
 
   if (loadError) {
     return (
-      <div>
+      <div dir={dir}>
         <DashboardNavbar />
-        <div className="text-center p-[100px]"><h2>Error loading data.</h2><p>{loadError}</p></div>
+        <div className="pt-[100px] max-md:pt-6 px-5">
+          <EmptyState icon={<Icon name="warning" />} title={t('err-generic')} description={loadError}
+            action={<button onClick={() => navigate('/library')} className="px-5 py-2.5 rounded-pill bg-primary text-white font-semibold hover:bg-primary-strong transition-colors">{t('back')}</button>} />
+        </div>
       </div>
     )
   }
 
   if (cards.length === 0) {
     return (
-      <div>
+      <div dir={dir}>
         <DashboardNavbar />
-        <div className="text-center p-[100px]"><h2>No cards for {subject}</h2></div>
+        <div className="pt-[100px] max-md:pt-6 px-5">
+          <EmptyState icon={<Icon name="cards" />} title={t('no-cards-found', { subject })}
+            action={<button onClick={() => navigate('/library')} className="px-5 py-2.5 rounded-pill bg-primary text-white font-semibold hover:bg-primary-strong transition-colors">{t('back')}</button>} />
+        </div>
       </div>
     )
   }
 
   return (
-    <>
+    <div dir={dir}>
       <DashboardNavbar />
 
-      <div className="w-full pt-[100px] max-md:pt-5">
-        <div className="flex justify-start px-10 max-md:px-4">
-          <button onClick={exitToDecks} className="bg-transparent border-0 text-base font-semibold text-ink cursor-pointer flex items-center gap-2 hover:text-primary hover:-translate-x-1">
-            <h5>← Back</h5>
-          </button>
+      <div className="w-full pt-[100px] max-md:pt-6">
+        <div className="px-6 max-md:px-4 mb-2">
+          <BackLink onClick={exitToDecks} label={t('back')} />
         </div>
 
         <div className="max-w-[760px] mx-auto flex gap-6 px-6 max-md:flex-col max-md:px-4">
-          <div className="w-1/4 text-ink max-lg:w-1/3 max-md:w-full max-md:flex max-md:gap-3 max-md:items-baseline max-md:mb-3">
+          <div className="w-1/4 text-ink max-lg:w-1/3 max-md:w-full max-md:flex max-md:gap-3 max-md:items-baseline max-md:mb-1">
             <h4 className="mb-4 max-md:mb-2">{deckMeta?.title || subject}</h4>
-            <p className="text-sm text-ink-muted">Card {index + 1} / {cards.length}</p>
+            <p className="text-sm text-ink-muted">{t('card-progress', { current: index + 1, total: cards.length })}</p>
           </div>
 
           <div className="flex-1 flex flex-col max-w-[520px] mx-auto w-full">
             {finished ? (
               <div className="bg-surface border border-border-soft rounded-3xl p-8 text-center flex flex-col items-center gap-5">
                 <span className="text-4xl">🎉</span>
-                <h3 className="text-xl font-heading font-bold text-ink">Session complete!</h3>
+                <h3 className="text-xl font-heading font-bold text-ink">{t('session-complete')}</h3>
                 {savedMood ? (
-                  <p className="text-ink-muted">Saved — see your progress on the deck browser.</p>
+                  <p className="text-ink-muted">{t('saved-see-progress')}</p>
                 ) : (
                   <>
-                    <p className="text-ink-muted">How did that go?</p>
+                    <p className="text-ink-muted">{t('how-did-that-go')}</p>
                     <div className="flex items-center gap-3">
                       {MOOD_EMOJI.map((emoji, i) => (
-                        <button key={i} onClick={() => finishSession(i + 1)} className="text-3xl hover:scale-125 transition-transform" aria-label={`rate ${i + 1}`}>
+                        <button key={i} onClick={() => finishSession(i + 1)} className="w-11 h-11 flex items-center justify-center text-3xl hover:scale-125 transition-transform" aria-label={`rate ${i + 1}`}>
                           {emoji}
                         </button>
                       ))}
                     </div>
                   </>
                 )}
-                <button onClick={() => navigate('/flashcard-decks')} className="mt-2 px-6 py-2.5 rounded-pill bg-primary text-white font-semibold hover:bg-primary-strong transition-colors">
-                  Back to decks
+                <button onClick={() => navigate('/flashcard-decks')} className="mt-2 px-6 py-2.5 min-h-12 rounded-pill bg-primary text-white font-semibold hover:bg-primary-strong transition-colors">
+                  {t('back-to-decks')}
                 </button>
               </div>
             ) : (
               <>
                 <div className={`flash-card-outer max-md:h-[220px] max-md:mt-5 max-[480px]:h-[180px] ${flipped ? 'flipped' : ''}`} onClick={() => setFlipped(!flipped)}>
                   <div className="flash-card-inner">
-                    <div className="flash-front max-md:p-6 max-md:rounded-[20px]"><h2 className="text-ez-xl max-md:text-[1.2rem] max-[480px]:text-base">{showQ}</h2></div>
-                    <div className="flash-back max-md:p-6 max-md:rounded-[20px]"><h3 className="max-md:text-[1.1rem] max-[480px]:text-[0.95rem]">{showA}</h3></div>
+                    <div className="flash-front max-md:p-6 max-md:rounded-[20px]"><h2 className="text-xl sm:text-2xl max-md:text-lg max-[480px]:text-base">{showQ}</h2></div>
+                    <div className="flash-back max-md:p-6 max-md:rounded-[20px]"><h3 className="text-lg max-md:text-base max-[480px]:text-sm">{showA}</h3></div>
                   </div>
                 </div>
 
                 <div className="flex justify-center gap-4 mt-8 max-md:mt-6">
-                  <button onClick={prev} disabled={index === 0} className="bg-surface-muted text-ink border border-border-soft py-2.5 px-6 rounded-xl cursor-pointer font-semibold hover:bg-bg-card transition-colors disabled:opacity-50 disabled:cursor-not-allowed max-md:text-[0.9rem]">Previous</button>
-                  <button onClick={next} className="bg-primary text-white border-0 py-2.5 px-6 rounded-xl cursor-pointer font-semibold hover:bg-primary-strong transition-colors max-md:text-[0.9rem]">
-                    {index === cards.length - 1 && deckMeta ? 'Finish' : 'Next'}
+                  <button onClick={prev} disabled={index === 0} className="bg-surface-muted text-ink border border-border-soft py-2.5 px-6 min-h-12 rounded-xl cursor-pointer font-semibold hover:bg-bg-card transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('previous')}</button>
+                  <button onClick={next} className="bg-primary text-white border-0 py-2.5 px-6 min-h-12 rounded-xl cursor-pointer font-semibold hover:bg-primary-strong transition-colors">
+                    {index === cards.length - 1 && deckMeta ? t('finish') : t('next')}
                   </button>
                 </div>
               </>
@@ -215,6 +222,6 @@ export default function Flashcard() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -15,19 +15,42 @@ import {
 const inputCls = 'flex-1 p-2.5 border-2 border-border-card rounded-lg text-sm box-border focus:border-primary-strong focus:outline-none min-w-0'
 const addBtnCls = 'bg-primary-strong text-white border-0 px-4 rounded-lg font-semibold cursor-pointer hover:bg-[#9a1418] whitespace-nowrap'
 
-function Row({ item, onSave, onDelete, onSelect, selected, extra }) {
+// `showCover` opts a row into editing an optional background-picture URL
+// (used for Subjects — see SubjectCard in the student Library — not Units).
+function Row({ item, onSave, onDelete, onSelect, selected, extra, showCover }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name || '')
+  const [cover, setCover] = useState(item.coverURL || '')
+
+  function save() {
+    if (!name.trim()) return
+    onSave({ name: name.trim(), ...(showCover ? { coverURL: cover.trim() } : {}) })
+    setEditing(false)
+  }
+  function cancel() {
+    setName(item.name || '')
+    setCover(item.coverURL || '')
+    setEditing(false)
+  }
+
   return (
     <div className={`flex items-center gap-2 p-2.5 border-b border-border-soft ${selected ? 'bg-primary-pale dark:bg-primary/10' : ''}`}>
       {editing ? (
-        <>
-          <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} autoFocus />
-          <button onClick={() => { if (name.trim()) { onSave({ name: name.trim() }); setEditing(false) } }} className="text-primary-strong font-bold cursor-pointer bg-transparent border-0 text-sm">Save</button>
-          <button onClick={() => { setName(item.name); setEditing(false) }} className="text-ink-muted cursor-pointer bg-transparent border-0 text-sm">Cancel</button>
-        </>
+        <div className="flex-1 flex flex-col gap-2 py-1">
+          <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} className={`${inputCls} w-full`} autoFocus placeholder="Name" />
+          {showCover && (
+            <input value={cover} onChange={(e) => setCover(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} className={`${inputCls} w-full`} placeholder="Background picture URL (optional)" />
+          )}
+          <div className="flex items-center gap-3">
+            <button onClick={save} className="text-primary-strong font-bold cursor-pointer bg-transparent border-0 text-sm">Save</button>
+            <button onClick={cancel} className="text-ink-muted cursor-pointer bg-transparent border-0 text-sm">Cancel</button>
+          </div>
+        </div>
       ) : (
         <>
+          {showCover && item.coverURL && (
+            <img src={item.coverURL} alt="" className="w-8 h-8 rounded-md object-cover shrink-0" />
+          )}
           <span
             onClick={onSelect}
             className={`flex-1 text-sm truncate ${onSelect ? 'cursor-pointer' : ''} ${selected ? 'text-primary-strong font-semibold' : ''}`}
@@ -52,6 +75,7 @@ export default function AdminAcademic({ showToast }) {
   const [selectedSubject, setSelectedSubject] = useState(null)
   const [units, setUnits] = useState([])
   const [newSubject, setNewSubject] = useState('')
+  const [newSubjectCover, setNewSubjectCover] = useState('')
   const [newUnit, setNewUnit] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -75,8 +99,9 @@ export default function AdminAcademic({ showToast }) {
   async function addSubject() {
     if (!newSubject.trim() || !stream) return
     try {
-      await createSubject({ name: newSubject, streamId: stream, order: subjects.length }, adminId)
+      await createSubject({ name: newSubject, streamId: stream, order: subjects.length, coverURL: newSubjectCover }, adminId)
       setNewSubject('')
+      setNewSubjectCover('')
       await loadSubjects(stream)
       showToast?.('Subject created')
     } catch (e) { setError(e.message) }
@@ -117,16 +142,18 @@ export default function AdminAcademic({ showToast }) {
         <div className="grid grid-cols-2 gap-6 max-[850px]:grid-cols-1">
           <div className="border border-border-soft rounded-xl p-4">
             <h3 className="text-base font-bold mb-3">Subjects — {streamLabel(stream, 'ar')}</h3>
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-2 mb-2">
               <input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addSubject()} placeholder="New subject name" className={inputCls} />
               <button onClick={addSubject} className={addBtnCls}>+ Add</button>
             </div>
+            <input value={newSubjectCover} onChange={(e) => setNewSubjectCover(e.target.value)} placeholder="Background picture URL (optional)" className={`${inputCls} w-full mb-3`} />
             {loading ? <p className="text-ink-muted text-sm">Loading…</p>
               : subjects.length === 0 ? <p className="text-ink-muted text-sm">No subjects yet.</p>
               : subjects.map((s) => (
                 <Row
                   key={s.id}
                   item={s}
+                  showCover
                   selected={selectedSubject?.id === s.id}
                   onSelect={() => { setSelectedSubject(s); loadUnits(s.id) }}
                   onSave={async (patch) => { await updateSubject(s.id, patch); loadSubjects(stream) }}

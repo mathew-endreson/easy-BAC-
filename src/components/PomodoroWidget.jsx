@@ -4,26 +4,13 @@ import { usePomodoro, formatDuration } from '../contexts/PomodoroContext.jsx'
 import { useTodos } from '../contexts/TodoContext.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
+import Icon from './ui/Icon.jsx'
 
 // Persistent compact Pomodoro + To-Do control. Rendered once, OUTSIDE <Routes>,
 // so both survive every navigation exactly like the timer already did. Hidden
 // for guests and on non-student surfaces (landing/auth/onboarding/admin) and on
 // the full Pomodoro page itself (which already shows both in full).
 const HIDE_EXACT = ['/', '/login', '/register', '/onboarding']
-
-function PlayIcon() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-}
-function PauseIcon() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
-}
-function ChecklistIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m3 6 2 2 4-4" /><path d="m3 14 2 2 4-4" /><path d="M11 6h10" /><path d="M11 14h10" />
-    </svg>
-  )
-}
 
 export default function PomodoroWidget() {
   const { isAuthenticated, profileComplete } = useAuth()
@@ -51,7 +38,9 @@ export default function PomodoroWidget() {
         <div className="mb-3 w-64 rounded-2xl border border-border-soft bg-surface shadow-xl shadow-black/20 p-4 text-ink">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold">{t('pomodoro')}</span>
-            <button onClick={() => setPanel(null)} aria-label={t('close')} className="text-ink-muted hover:text-ink text-lg leading-none">×</button>
+            <button onClick={() => setPanel(null)} aria-label={t('close')} className="w-8 h-8 flex items-center justify-center -me-1 rounded-full text-ink-muted hover:text-ink hover:bg-surface-muted transition-colors">
+              <Icon name="close" className="w-4 h-4" />
+            </button>
           </div>
           <div className="flex gap-1.5 mb-4">
             {modes.map((m) => (
@@ -69,13 +58,11 @@ export default function PomodoroWidget() {
           <div className="flex items-center justify-center gap-3">
             <button onClick={toggle}
               className="flex items-center justify-center w-11 h-11 rounded-full bg-primary text-white hover:bg-primary-strong transition-colors">
-              {isRunning ? <PauseIcon /> : <PlayIcon />}
+              <Icon name={isRunning ? 'pause' : 'play'} className="w-4 h-4" />
             </button>
             <button onClick={reset} aria-label="reset"
               className="flex items-center justify-center w-11 h-11 rounded-full bg-surface-muted text-ink border border-border-soft hover:bg-bg-card transition-colors">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" />
-              </svg>
+              <Icon name="refresh" className="w-4 h-4" />
             </button>
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] text-ink-muted">
@@ -89,7 +76,9 @@ export default function PomodoroWidget() {
         <div className="mb-3 w-72 rounded-2xl border border-border-soft bg-surface shadow-xl shadow-black/20 p-4 text-ink">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold">{t('todo-list')}</span>
-            <button onClick={() => setPanel(null)} aria-label={t('close')} className="text-ink-muted hover:text-ink text-lg leading-none">×</button>
+            <button onClick={() => setPanel(null)} aria-label={t('close')} className="w-8 h-8 flex items-center justify-center -me-1 rounded-full text-ink-muted hover:text-ink hover:bg-surface-muted transition-colors">
+              <Icon name="close" className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="flex gap-2 mb-3">
@@ -103,7 +92,7 @@ export default function PomodoroWidget() {
             />
             <button onClick={submitTodo} aria-label={t('add-task')}
               className="w-9 h-9 shrink-0 rounded-lg bg-primary text-white flex items-center justify-center hover:bg-primary-strong transition-colors">
-              +
+              <Icon name="plus" className="w-4 h-4" />
             </button>
           </div>
 
@@ -125,8 +114,8 @@ export default function PomodoroWidget() {
                     {task.text}
                   </span>
                   <button onClick={() => deleteTask(task)} aria-label="delete"
-                    className="text-ink-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    ✕
+                    className="w-7 h-7 flex items-center justify-center text-ink-muted hover:text-primary opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity shrink-0">
+                    <Icon name="close" className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))
@@ -141,25 +130,25 @@ export default function PomodoroWidget() {
       )}
 
       {/* Collapsed pill */}
-      <div className="flex items-center gap-2 rounded-full border border-border-soft bg-surface shadow-lg shadow-black/20 ps-2 pe-1 py-1 text-ink">
-        <button onClick={() => setPanel((p) => p === 'pomodoro' ? null : 'pomodoro')} className="flex items-center gap-2" aria-label={t('pomodoro')} title={t('pomodoro')}>
-          <span className="relative flex items-center justify-center w-8 h-8 rounded-full" style={{ background: ring }}>
+      <div className="flex items-center gap-1.5 rounded-full border border-border-soft bg-surface shadow-lg shadow-black/20 ps-2 pe-1.5 py-1.5 text-ink">
+        <button onClick={() => setPanel((p) => p === 'pomodoro' ? null : 'pomodoro')} className="flex items-center gap-2 min-h-10" aria-label={t('pomodoro')} title={t('pomodoro')}>
+          <span className="relative flex items-center justify-center w-9 h-9 rounded-full shrink-0" style={{ background: ring }}>
             <span className="absolute inset-[3px] rounded-full bg-surface" />
             <span className="relative text-base leading-none">🍅</span>
           </span>
           <span className="text-sm font-semibold tabular-nums pe-1">{formatDuration(remaining)}</span>
         </button>
         <button onClick={toggle} aria-label={isRunning ? 'pause' : 'play'}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white hover:bg-primary-strong transition-colors">
-          {isRunning ? <PauseIcon /> : <PlayIcon />}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white hover:bg-primary-strong transition-colors shrink-0">
+          <Icon name={isRunning ? 'pause' : 'play'} className="w-4 h-4" />
         </button>
         <button
           onClick={() => setPanel((p) => p === 'todo' ? null : 'todo')}
           aria-label={t('todo-list')} title={t('todo-list')}
-          className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors
+          className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors shrink-0
                       ${panel === 'todo' ? 'bg-primary-soft text-primary-strong dark:bg-primary/15 dark:text-primary-glow' : 'text-ink-muted hover:text-ink hover:bg-surface-muted'}`}
         >
-          <ChecklistIcon />
+          <Icon name="checklist" className="w-4 h-4" />
           {pending.length > 0 && (
             <span className="absolute -top-0.5 -end-0.5 min-w-[14px] h-[14px] px-[3px] rounded-full bg-primary text-white text-[9px] font-bold leading-[14px] text-center">
               {pending.length > 9 ? '9+' : pending.length}

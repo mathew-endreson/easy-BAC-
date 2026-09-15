@@ -30,10 +30,42 @@ const PATHS = {
   chevronRight: <><path d="m9 5 7 7-7 7" /></>,
   arrowLeft: <><path d="M19 12H5M11 6l-6 6 6 6" /></>,
   clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" /></>,
-  star: <><path d="M12 3.5 15 9l6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 9.9 9 9z" /></>
+  user: <><circle cx="12" cy="8.5" r="3.7" /><path d="M4 20c1.2-4.4 4-6.6 8-6.6s6.8 2.2 8 6.6" /></>,
+  star: <><path d="M12 3.5 15 9l6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 9.9 9 9z" /></>,
+  heart: <><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></>,
+  refresh: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></>,
+  trash: <><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></>,
+  close: <><path d="M6 6l12 12M18 6 6 18" /></>,
+  globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a14 14 0 0 1 3.6 9 14 14 0 0 1-3.6 9 14 14 0 0 1-3.6-9A14 14 0 0 1 12 3z" /></>,
+  sun: <><circle cx="12" cy="12" r="4.5" /><path d="M12 1.5v2M12 20.5v2M4 4l1.4 1.4M18.6 18.6 20 20M1.5 12h2M20.5 12h2M4 20l1.4-1.4M18.6 5.4 20 4" /></>,
+  moon: <><path d="M20.5 13.9A9 9 0 1 1 10.1 3.5 7 7 0 0 0 20.5 13.9z" /></>,
+  calculator: <><rect x="5" y="2.5" width="14" height="19" rx="2.5" /><path d="M8 6.5h8" /><path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01" /></>,
+  volume: <><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M15.5 8.5a4.5 4.5 0 0 1 0 7" /></>,
+  volumeMute: <><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="m17 9 4.5 6M21.5 9 17 15" /></>
 }
 
-export default function Icon({ name, className = 'w-5 h-5', strokeWidth = 1.75 }) {
+// A couple of glyphs (play/pause) read better solid than as outlines, even
+// within an otherwise stroke-based set — same 24x24 grid and currentColor, so
+// they still sit flush with every other icon at the same size.
+const FILLED = {
+  play: <path d="M8 5v14l11-7z" />,
+  pause: <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+}
+
+// `filled` lets a toggle (favorite heart/star) render solid when active and
+// outlined when not, using the exact same glyph and size either way — pass it
+// explicitly to override the default (play/pause are always solid).
+export default function Icon({ name, className = 'w-5 h-5', strokeWidth = 1.75, filled }) {
+  const isFilled = filled ?? Boolean(FILLED[name])
+  if (isFilled) {
+    const path = FILLED[name] || PATHS[name]
+    if (!path) return null
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+        {path}
+      </svg>
+    )
+  }
   const path = PATHS[name]
   if (!path) return null
   return (

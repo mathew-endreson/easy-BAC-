@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLang } from '../contexts/LangContext.jsx'
+import Icon from './ui/Icon.jsx'
 
 // Accessible, theme-aware language dropdown. Replaces the old LangToggle, which
 // hardcoded light-only colors (bg-slate-100) and broke in dark mode. Every
@@ -37,17 +38,13 @@ export default function LanguageSelector() {
         aria-expanded={open}
         aria-label={t('language')}
         title={t('language')}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] text-sm font-semibold
+        className="flex items-center gap-1.5 min-h-10 px-3 rounded-[10px] text-sm font-semibold
                    text-ink bg-surface-muted border border-border-soft
                    hover:bg-bg-card hover:border-border-card
                    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
                    transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20" />
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-        </svg>
+        <Icon name="globe" className="w-4 h-4" />
         <span>{current.short}</span>
       </button>
 

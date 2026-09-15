@@ -321,11 +321,11 @@
     left: 0;
     right: 0;
     border-bottom: none;
-    border-top: 1px solid #E2E8F0;
+    border-top: 1px solid rgb(var(--c-border-soft));
     z-index: 1100;
   }
   .dashboard-navbar-bottom .dashboard-container {
-    padding: 6px 4px !important;
+    padding: 6px 6px !important;
     border-radius: 0 !important;
     background: rgba(255, 255, 255, 0.95);
     -webkit-backdrop-filter: blur(16px);
@@ -341,25 +341,34 @@
     overflow-x: visible;
     padding-bottom: 0;
   }
+  /* Each tab is a real >=48px touch target (icon + label), not just the
+     visible glyph — WCAG/Apple/Material all recommend ~44-48px minimum. */
   .dashboard-navbar-bottom .dash-link {
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    font-size: 10px !important;
-    padding: 4px 0;
+    justify-content: center;
+    gap: 3px;
+    font-size: 11px !important;
+    padding: 6px 2px;
+    min-height: 48px;
     flex: 1;
     min-width: 0;
   }
   .dashboard-navbar-bottom .dash-link span {
     display: block !important;
-    font-size: 10px !important;
+    font-size: 11px !important;
     line-height: 1.2;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
   .dashboard-navbar-bottom .dash-link::after { display: none; }
-  .dashboard-navbar-bottom .dash-link.active { font-size: 10px !important; color: #BB181D; }
-  body.has-bottom-tab { padding-bottom: 70px; }
+  .dashboard-navbar-bottom .dash-link.active { font-size: 11px !important; color: #BB181D; }
+  body.has-bottom-tab { padding-bottom: 76px; }
 }
+
+.dark .dashboard-navbar-bottom { border-top-color: rgb(var(--c-border-soft)); }
 
 /* iOS safe area for bottom tab */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
@@ -367,7 +376,7 @@
     .dashboard-navbar-bottom .dashboard-container {
       padding-bottom: calc(6px + env(safe-area-inset-bottom)) !important;
     }
-    body.has-bottom-tab { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+    body.has-bottom-tab { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
   }
 }
 

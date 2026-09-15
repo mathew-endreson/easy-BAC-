@@ -20,9 +20,9 @@ export async function getSubjects(streamId) {
   return mapDocs(snap).sort(byOrder)
 }
 
-export function createSubject({ name, streamId, order = 0 }, adminId) {
+export function createSubject({ name, streamId, order = 0, coverURL = '' }, adminId) {
   return addDoc(collection(db, 'subjects'), {
-    name: name.trim(), streamId, order: Number(order) || 0, status: 'ACTIVE',
+    name: name.trim(), streamId, order: Number(order) || 0, coverURL: coverURL.trim(), status: 'ACTIVE',
     createdAt: serverTimestamp(), updatedAt: serverTimestamp(), createdBy: adminId || null
   })
 }

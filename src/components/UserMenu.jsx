@@ -63,10 +63,11 @@ export default function UserMenu() {
           className={`absolute top-full mt-2 min-w-[200px] py-1.5 z-[2000] rounded-xl border border-border-soft bg-surface shadow-lg shadow-black/10
                       ${dir === 'rtl' ? 'left-0' : 'right-0'}`}
         >
-          <div className="px-4 py-2 border-b border-border-soft">
+          <Link to="/profile" role="menuitem" onClick={() => setOpen(false)}
+            className="block px-4 py-2 border-b border-border-soft no-underline hover:bg-surface-muted">
             <p className="text-sm font-semibold text-ink truncate">{name}</p>
             {user?.email && <p className="text-xs text-ink-muted truncate">{user.email}</p>}
-          </div>
+          </Link>
           {isSuperAdmin && (
             <Link to="/admin" role="menuitem" onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-4 py-2 text-sm text-ink hover:bg-surface-muted no-underline">

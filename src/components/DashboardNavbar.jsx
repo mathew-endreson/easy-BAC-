@@ -8,15 +8,15 @@ import Icon from './ui/Icon.jsx'
 
 // Student navigation. Library is now the default landing page (Home was
 // removed — it duplicated Library/Progress without adding anything of its
-// own). Progress / Favorites / Support are first-class destinations (§7).
-// Pomodoro stays globally reachable via the floating widget; Games/Calculator
-// remain reachable from Library.
+// own). Progress / Favorites / Profile are first-class destinations (§7).
+// Pomodoro stays globally reachable via the floating widget. Games/Calculator
+// are not linked from anywhere in this nav or Library anymore (direct-URL only).
 const items = [
   { to: '/library', icon: 'library', key: 'library' },
   { to: '/teachers', icon: 'teacher', key: 'nav-teachers' },
   { to: '/progress', icon: 'chart', key: 'nav-progress' },
   { to: '/favorites', icon: 'star', key: 'nav-favorites' },
-  { to: '/support', icon: 'chat', key: 'nav-support' }
+  { to: '/profile', icon: 'user', key: 'nav-profile' }
 ]
 
 export default function DashboardNavbar() {
@@ -47,7 +47,7 @@ export default function DashboardNavbar() {
                 `dash-link flex items-center gap-2 no-underline text-ink text-base shrink-0 ${isActive ? 'active' : ''}`
               }
             >
-              <Icon name={item.icon} className="w-[19px] h-[19px]" />
+              <Icon name={item.icon} className="w-5 h-5" />
               <span>{t(item.key)}</span>
             </NavLink>
           ))}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
@@ -94,8 +94,7 @@ export default function CourseDetail() {
     <div dir={dir}>
       <DashboardNavbar />
       <div className="max-w-container mx-auto px-5 mt-[110px] max-md:mt-6 pb-16">
-        <Link to="/courses" className="text-sm text-ink-muted hover:text-primary no-underline">← {t('video-courses')}</Link>
-        <PageHeader title={course.title} subtitle={teacher?.name} />
+        <PageHeader title={course.title} subtitle={teacher?.name} back="/courses" />
 
         {course.description && <p className="text-ink-muted mb-5 max-w-2xl">{course.description}</p>}
 

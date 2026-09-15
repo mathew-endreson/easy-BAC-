@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import LandingNavbar from '../components/LandingNavbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
+import Icon from '../components/ui/Icon.jsx'
 
 const fields = [
   'شعبة علوم تجريبية', 'شعبة رياضيات', 'شعبة تسيير و اقتصاد',
@@ -10,15 +11,18 @@ const fields = [
   'شعبة هندسة كهربائية', 'شعبة هندسة مدنية'
 ]
 
+// Each tile gets its own real vector icon from the shared set — the previous
+// version reused resume.svg for Calculator/Teachers/Quizzes (no dedicated
+// asset existed for them), so three unrelated tiles showed an identical icon.
 const services = [
-  { icon: '/assets/icons/resume.svg', label: 'Resumes' },
-  { icon: '/assets/icons/tests.svg', label: 'Tests' },
-  { icon: '/assets/icons/lessons.svg', label: 'Lessons' },
-  { icon: '/assets/icons/flashcards.svg', label: 'Flashcards' },
-  { icon: '/assets/icons/book.svg', label: 'Books' },
-  { icon: '/assets/icons/resume.svg', label: 'Calculator' },
-  { icon: '/assets/icons/resume.svg', label: 'Teachers' },
-  { icon: '/assets/icons/resume.svg', label: 'Quizzes' }
+  { icon: 'folder', label: 'Resumes' },
+  { icon: 'quiz', label: 'Tests' },
+  { icon: 'book', label: 'Lessons' },
+  { icon: 'cards', label: 'Flashcards' },
+  { icon: 'library', label: 'Books' },
+  { icon: 'calculator', label: 'Calculator' },
+  { icon: 'teacher', label: 'Teachers' },
+  { icon: 'quiz', label: 'Quizzes' }
 ]
 
 const aboutCards = [
@@ -134,14 +138,16 @@ export default function Landing() {
         </div>
       </section>
 
-      <div className="ez-container mt-[100px] grid grid-cols-4 gap-2 max-lg:grid-cols-2 max-md:grid-cols-2 max-md:gap-3 max-md:mt-[60px]">
+      <div className="ez-container mt-[100px] grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-md:grid-cols-2 max-md:gap-3 max-md:mt-14">
         {services.map((s, i) => (
           <div
             key={s.label + i}
-            className="border border-border-soft rounded-[30px] flex flex-col items-center justify-center py-6 px-3 gap-1.5 text-center cursor-pointer hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(65,7,2,0.15)] hover:border-primary"
+            className="border border-border-soft rounded-3xl flex flex-col items-center justify-center py-6 px-3 gap-2.5 text-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(65,7,2,0.15)] hover:border-primary"
           >
-            <img src={s.icon} alt={`${s.label} Icon`} className="h-[30px] w-auto" />
-            <h3 className="text-ez-xl text-[#410702] m-0 max-md:text-base">{s.label}</h3>
+            <span className="w-11 h-11 rounded-xl bg-primary-soft dark:bg-primary/15 flex items-center justify-center text-primary-strong">
+              <Icon name={s.icon} className="w-5 h-5" />
+            </span>
+            <h3 className="text-lg font-heading font-bold text-[#410702] dark:text-ink m-0 max-md:text-base">{s.label}</h3>
           </div>
         ))}
       </div>
@@ -167,8 +173,8 @@ export default function Landing() {
                   <img src={c.img} alt="" className="w-full object-contain block" />
                 </div>
                 <div className="mt-auto flex flex-col gap-px min-h-[130px]">
-                  <h4 className="text-ez-2xl text-black">{c.title}</h4>
-                  <p className="text-ez-sm text-slate-700">{c.text}</p>
+                  <h4 className="text-ez-2xl text-ink">{c.title}</h4>
+                  <p className="text-ez-sm text-ink-muted">{c.text}</p>
                 </div>
               </div>
             ))}

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useLang } from '../contexts/LangContext.jsx'
 import LanguageSelector from './LanguageSelector.jsx'
 import ThemeToggle from './ThemeToggle.jsx'
+import Icon from './ui/Icon.jsx'
 
 // Shared layout for all authentication screens (login / register / onboarding).
 // Two columns on desktop (brand panel + form); stacks to a single column with a
@@ -48,8 +49,8 @@ export default function AuthShell({ title, subtitle, children, footer }) {
             {children}
             {footer && <div className="mt-6 text-center text-sm text-ink-muted">{footer}</div>}
             <div className="mt-8 text-center">
-              <Link to="/" className="text-sm text-ink-muted hover:text-primary transition-colors no-underline">
-                ← {t('auth-back-home')}
+              <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-primary transition-colors no-underline">
+                <Icon name="arrowLeft" className="w-3.5 h-3.5" /> {t('auth-back-home')}
               </Link>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import FavoriteButton from '../components/FavoriteButton.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -57,8 +57,7 @@ export default function UnitView() {
     <div dir={dir}>
       <DashboardNavbar />
       <div className="max-w-container mx-auto px-5 mt-[110px] max-md:mt-6 pb-16">
-        <Link to={unit?.subjectId ? `/library/subject/${unit.subjectId}` : '/library'} className="text-sm text-ink-muted hover:text-primary no-underline">← {t('back')}</Link>
-        <PageHeader title={unit?.name || t('units')} subtitle={t('content')} />
+        <PageHeader title={unit?.name || t('units')} subtitle={t('content')} back={unit?.subjectId ? `/library/subject/${unit.subjectId}` : '/library'} />
 
         {loading ? <Spinner label={t('loading')} />
           : empty ? <EmptyState icon={<Icon name="folder" />} title={t('no-content-title')} description={t('no-content-desc')} />

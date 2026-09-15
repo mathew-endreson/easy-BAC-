@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLang } from '../contexts/LangContext.jsx'
+import Icon from './ui/Icon.jsx'
 
 // Compact quiz/flashcard "deck" card with personal progress tracking — a ring
 // showing real progress, a timer, and play/reset/stats controls, plus (for
@@ -56,11 +57,9 @@ export default function DeckCard({
             onClick={onToggleFavorite}
             aria-label={isFavorite ? t('saved') : t('favorite')}
             aria-pressed={isFavorite}
-            className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${isFavorite ? 'text-amber-500' : 'text-ink-muted hover:text-amber-500'}`}
+            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isFavorite ? 'text-amber-500' : 'text-ink-muted hover:text-amber-500'}`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
+            <Icon name="star" className="w-4 h-4" filled={isFavorite} />
           </button>
         </div>
       </div>
@@ -72,20 +71,16 @@ export default function DeckCard({
           <div className="flex items-center gap-2">
             <button onClick={onPlay} aria-label={t('start')} title={t('start')}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-500 text-white hover:bg-emerald-600 transition-colors">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+              <Icon name="play" className="w-4 h-4" />
             </button>
             <button onClick={onReset} aria-label="reset" title="Reset"
               className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-muted text-ink border border-border-soft hover:bg-bg-card transition-colors">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" />
-              </svg>
+              <Icon name="refresh" className="w-4 h-4" />
             </button>
             {statsLines && (
               <button onClick={() => setShowStats((s) => !s)} aria-expanded={showStats} aria-label="stats" title="Stats"
                 className={`w-10 h-10 flex items-center justify-center rounded-full border border-border-soft transition-colors ${showStats ? 'bg-primary-soft text-primary-strong dark:bg-primary/15 dark:text-primary-glow' : 'bg-surface-muted text-ink hover:bg-bg-card'}`}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <path d="M3 3v18h18" /><path d="M7 15l4-6 4 3 5-8" />
-                </svg>
+                <Icon name="chart" className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -115,10 +110,8 @@ export default function DeckCard({
 
       <div className="flex justify-end">
         <button onClick={onDelete} aria-label="reset progress" title="Reset personal progress"
-          className="text-ink-muted hover:text-primary transition-colors">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-          </svg>
+          className="w-9 h-9 flex items-center justify-center text-ink-muted hover:text-primary transition-colors">
+          <Icon name="trash" className="w-4 h-4" />
         </button>
       </div>
     </div>

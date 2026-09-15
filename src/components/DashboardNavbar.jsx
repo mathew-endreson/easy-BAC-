@@ -16,7 +16,7 @@ const items = [
   { to: '/teachers', icon: 'teacher', key: 'nav-teachers' },
   { to: '/progress', icon: 'chart', key: 'nav-progress' },
   { to: '/favorites', icon: 'star', key: 'nav-favorites' },
-  { to: '/support', icon: 'chat', key: 'nav-support' }
+  { to: '/profile', icon: 'profile', key: 'profile' }
 ]
 
 export default function DashboardNavbar() {

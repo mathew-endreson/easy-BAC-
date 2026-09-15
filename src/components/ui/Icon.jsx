@@ -30,7 +30,8 @@ const PATHS = {
   chevronRight: <><path d="m9 5 7 7-7 7" /></>,
   arrowLeft: <><path d="M19 12H5M11 6l-6 6 6 6" /></>,
   clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" /></>,
-  star: <><path d="M12 3.5 15 9l6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 9.9 9 9z" /></>
+  star: <><path d="M12 3.5 15 9l6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 9.9 9 9z" /></>,
+  profile: <><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="9.8" r="3" /><path d="M6 18c1-3.3 3-5 6-5s5 1.7 6 5" /></>
 }
 
 export default function Icon({ name, className = 'w-5 h-5', strokeWidth = 1.75 }) {

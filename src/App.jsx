@@ -17,7 +17,7 @@ import Games from './pages/Games.jsx'
 import Progress from './pages/Progress.jsx'
 import Favorites from './pages/Favorites.jsx'
 import StudyPlans from './pages/StudyPlans.jsx'
-import Support from './pages/Support.jsx'
+import Profile from './pages/Profile.jsx'
 import Admin from './pages/Admin.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
@@ -62,7 +62,10 @@ export default function App() {
       <Route path="/progress" element={student(<Progress />)} />
       <Route path="/favorites" element={student(<Favorites />)} />
       <Route path="/study-plans" element={student(<StudyPlans />)} />
-      <Route path="/support" element={student(<Support />)} />
+      <Route path="/profile" element={student(<Profile />)} />
+      {/* Support was replaced by Profile (personal stats/progress + admin
+          switch) — redirect any old bookmark/link rather than 404ing it. */}
+      <Route path="/support" element={<Navigate to="/profile" replace />} />
 
       {/* Super Admin only */}
       <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />

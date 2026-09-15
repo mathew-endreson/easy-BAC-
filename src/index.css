@@ -358,16 +358,24 @@
   }
   .dashboard-navbar-bottom .dash-link::after { display: none; }
   .dashboard-navbar-bottom .dash-link.active { font-size: 10px !important; color: #BB181D; }
-  body.has-bottom-tab { padding-bottom: 70px; }
+  .dashboard-topbar-mobile { height: 52px; }
+  body.has-bottom-tab { padding-top: 52px; padding-bottom: 70px; }
 }
 
-/* iOS safe area for bottom tab */
+/* iOS safe area for the mobile top bar + bottom tab */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   @media (max-width: 768px) {
     .dashboard-navbar-bottom .dashboard-container {
       padding-bottom: calc(6px + env(safe-area-inset-bottom)) !important;
     }
-    body.has-bottom-tab { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+    .dashboard-topbar-mobile {
+      padding-top: env(safe-area-inset-top);
+      height: calc(52px + env(safe-area-inset-top));
+    }
+    body.has-bottom-tab {
+      padding-top: calc(52px + env(safe-area-inset-top));
+      padding-bottom: calc(70px + env(safe-area-inset-bottom));
+    }
   }
 }
 

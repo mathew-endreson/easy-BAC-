@@ -50,7 +50,7 @@ export default function Courses() {
                   <button key={c.id} onClick={() => navigate(`/courses/${c.id}`)}
                     className="text-start flex flex-col bg-surface border border-border-soft rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(0,0,0,0.08)] transition">
                     <div className="h-32 bg-gradient-to-br from-primary via-primary-strong to-primary-deep flex items-center justify-center text-white/90">
-                      {c.coverURL ? <img src={c.coverURL} alt="" className="w-full h-full object-cover" /> : <Icon name="video" className="w-8 h-8" />}
+                      {c.coverURL ? <img src={c.coverURL} alt="" className="w-full h-full object-cover" loading="lazy" /> : <Icon name="video" className="w-8 h-8" />}
                     </div>
                     <div className="p-4">
                       <h4 className="font-heading font-bold text-ink line-clamp-2 mb-2">{c.title}</h4>

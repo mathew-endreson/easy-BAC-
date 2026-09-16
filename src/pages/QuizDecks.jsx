@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import DeckCard from '../components/DeckCard.jsx'
@@ -7,7 +7,8 @@ import { useLang } from '../contexts/LangContext.jsx'
 import { useFavorites } from '../contexts/FavoritesContext.jsx'
 import { formatDuration } from '../contexts/PomodoroContext.jsx'
 import { getQuizDecks } from '../services/decks.js'
-import { getAllProgress, resetDeckProgress } from '../services/progress.js'
+import { getAllProgress } from '../services/progress.js'
+import { getSubjects } from '../services/academic.js'
 import { PageHeader, EmptyState, LoadingGrid } from '../components/ui/kit.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
@@ -19,6 +20,8 @@ export default function QuizDecks() {
   const { t, dir } = useLang()
   const { isFavorite, toggleFavorite } = useFavorites()
   const [decks, setDecks] = useState([])
+  const [subjects, setSubjects] = useState([])
+  const [activeSubject, setActiveSubject] = useState('all')
   const [progressMap, setProgressMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -26,8 +29,9 @@ export default function QuizDecks() {
   async function load() {
     setLoading(true); setError('')
     try {
-      const [deckList, progress] = await Promise.all([getQuizDecks(stream), getAllProgress(user.uid)])
+      const [deckList, progress, subjectList] = await Promise.all([getQuizDecks(stream), getAllProgress(user.uid), getSubjects(stream)])
       setDecks(deckList)
+      setSubjects(subjectList)
       setProgressMap(Object.fromEntries(progress.filter((p) => p.type === 'quiz').map((p) => [p.contentId, p])))
     } catch (e) {
       setError(e.message)
@@ -38,15 +42,22 @@ export default function QuizDecks() {
 
   useEffect(() => { load() }, [stream])
 
+  // Only show a chip for a subject that actually has at least one deck —
+  // avoids an empty filter row when content isn't tagged yet.
+  const availableSubjects = useMemo(() => {
+    const idsWithDecks = new Set(decks.map((d) => d.subjectId).filter(Boolean))
+    return subjects.filter((s) => idsWithDecks.has(s.id))
+  }, [subjects, decks])
+
+  const visibleDecks = useMemo(
+    () => (activeSubject === 'all' ? decks : decks.filter((d) => d.subjectId === activeSubject)),
+    [decks, activeSubject]
+  )
+
   function play(deck) {
     localStorage.setItem('selectedQuizId', deck.id)
     localStorage.setItem('selectedQuizSubject', deck.subject || '')
     navigate('/quiz')
-  }
-
-  async function resetProgress(deck) {
-    await resetDeckProgress(user.uid, 'quiz', deck.id)
-    setProgressMap((prev) => { const next = { ...prev }; delete next[deck.id]; return next })
   }
 
   return (
@@ -55,12 +66,21 @@ export default function QuizDecks() {
       <div className="max-w-container mx-auto px-5 mt-[110px] max-md:mt-6 pb-16">
         <PageHeader title={t('quizzes')} subtitle={t('nav-progress')} />
 
+        {availableSubjects.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button onClick={() => setActiveSubject('all')} className={`h-9 px-4 rounded-[12px] text-sm transition ${activeSubject === 'all' ? 'bg-primary-soft text-primary-strong dark:bg-primary/15 dark:text-primary-glow' : 'border border-border-soft bg-surface text-ink hover:bg-surface-muted'}`}>{t('all')}</button>
+            {availableSubjects.map((s) => (
+              <button key={s.id} onClick={() => setActiveSubject(s.id)} className={`h-9 px-4 rounded-[12px] text-sm transition ${activeSubject === s.id ? 'bg-primary-soft text-primary-strong dark:bg-primary/15 dark:text-primary-glow' : 'border border-border-soft bg-surface text-ink hover:bg-surface-muted'}`}>{s.name}</button>
+            ))}
+          </div>
+        )}
+
         {loading ? <LoadingGrid count={6} className="grid-cols-3 max-md:grid-cols-2 max-[520px]:grid-cols-1" />
           : error ? <EmptyState icon={<Icon name="warning" />} title={t('err-generic')} description={error} />
-          : decks.length === 0 ? <EmptyState icon={<Icon name="quiz" />} title={t('no-content-title')} description={t('no-content-desc')} />
+          : visibleDecks.length === 0 ? <EmptyState icon={<Icon name="quiz" />} title={t('no-content-title')} description={t('no-content-desc')} />
           : (
             <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
-              {decks.map((deck) => {
+              {visibleDecks.map((deck) => {
                 const p = progressMap[deck.id]
                 // A completed (scored) attempt and a partial (exited-early,
                 // unscored) one are genuinely different states — conflating
@@ -104,7 +124,6 @@ export default function QuizDecks() {
                     ] : p?.answered ? [`Answered ${p.answered}/${deck.total} (not yet finished)`] : null}
                     isFavorite={isFavorite('quiz', deck.id)}
                     onToggleFavorite={() => toggleFavorite({ type: 'quiz', contentId: deck.id, title: deck.title, subjectId: deck.subjectId, unitId: deck.unitId, stream: deck.stream })}
-                    onDelete={() => resetProgress(deck)}
                   />
                 )
               })}

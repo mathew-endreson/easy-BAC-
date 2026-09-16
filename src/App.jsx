@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing.jsx'
 import Library from './pages/Library.jsx'
@@ -5,6 +6,7 @@ import SubjectView from './pages/SubjectView.jsx'
 import UnitView from './pages/UnitView.jsx'
 import Resources from './pages/Resources.jsx'
 import Teachers from './pages/Teachers.jsx'
+import TeacherDetail from './pages/TeacherDetail.jsx'
 import Courses from './pages/Courses.jsx'
 import CourseDetail from './pages/CourseDetail.jsx'
 import Quiz from './pages/Quiz.jsx'
@@ -18,13 +20,16 @@ import Progress from './pages/Progress.jsx'
 import Favorites from './pages/Favorites.jsx'
 import StudyPlans from './pages/StudyPlans.jsx'
 import Profile from './pages/Profile.jsx'
-import Admin from './pages/Admin.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Onboarding from './pages/Onboarding.jsx'
 import NotFound from './pages/NotFound.jsx'
 import PomodoroWidget from './components/PomodoroWidget.jsx'
-import { RequireAuth, RequireProfile, RequireAdmin, RedirectIfAuthed } from './components/RouteGuards.jsx'
+import { FullScreenLoader, RequireAuth, RequireProfile, RequireAdmin, RedirectIfAuthed } from './components/RouteGuards.jsx'
+
+// Admin is a large, rarely-visited (super_admin only) bundle — split it out of
+// the main chunk so every student's initial load stays lean.
+const Admin = lazy(() => import('./pages/Admin.jsx'))
 
 // A student page: requires auth + a completed profile (wilaya + BAC stream).
 const student = (el) => <RequireProfile>{el}</RequireProfile>
@@ -32,6 +37,7 @@ const student = (el) => <RequireProfile>{el}</RequireProfile>
 export default function App() {
   return (
     <>
+    <Suspense fallback={<FullScreenLoader />}>
     <Routes>
       {/* Public */}
       <Route path="/" element={<Landing />} />
@@ -50,6 +56,7 @@ export default function App() {
       <Route path="/library/unit/:unitId" element={student(<UnitView />)} />
       <Route path="/resources" element={student(<Resources />)} />
       <Route path="/teachers" element={student(<Teachers />)} />
+      <Route path="/teachers/:teacherId" element={student(<TeacherDetail />)} />
       <Route path="/courses" element={student(<Courses />)} />
       <Route path="/courses/:courseId" element={student(<CourseDetail />)} />
       <Route path="/quiz" element={student(<Quiz />)} />
@@ -72,6 +79,7 @@ export default function App() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
     {/* Persistent, session-global Pomodoro control — outside <Routes> so it
         never unmounts on navigation. */}
     <PomodoroWidget />

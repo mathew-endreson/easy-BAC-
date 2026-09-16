@@ -27,6 +27,13 @@ export async function getPublishedCourses(stream) {
   return filterByStream(all.filter((c) => c.status === 'PUBLISHED'), stream)
 }
 
+// A single teacher's published courses, visible to the student's stream — used
+// by the Teacher detail page.
+export async function getCoursesByTeacher(teacherId, stream) {
+  const snap = await getDocs(query(collection(db, 'videoCourses'), where('teacherId', '==', teacherId)))
+  return filterByStream(mapDocs(snap).filter((c) => c.status === 'PUBLISHED'), stream)
+}
+
 export async function getCourseById(id) {
   const s = await getDoc(doc(db, 'videoCourses', id))
   return s.exists() ? { id: s.id, ...s.data() } : null

@@ -40,7 +40,7 @@ function Ring({ percent, color, centerTop, centerBottom }) {
 export default function DeckCard({
   title, subtitle, ringPercent, ringColor, centerTop, centerBottom, timerLabel,
   onPlay, onReset, statsLines, showMood, moodValue, onMood,
-  isFavorite, onToggleFavorite, onDelete
+  isFavorite, onToggleFavorite
 }) {
   const { t } = useLang()
   const [showStats, setShowStats] = useState(false)
@@ -107,13 +107,6 @@ export default function DeckCard({
           })}
         </div>
       )}
-
-      <div className="flex justify-end">
-        <button onClick={onDelete} aria-label="reset progress" title="Reset personal progress"
-          className="w-9 h-9 flex items-center justify-center text-ink-muted hover:text-primary transition-colors">
-          <Icon name="trash" className="w-4 h-4" />
-        </button>
-      </div>
     </div>
   )
 }

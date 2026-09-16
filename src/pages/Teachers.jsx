@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLang } from '../contexts/LangContext.jsx'
@@ -13,6 +14,7 @@ import Icon from '../components/ui/Icon.jsx'
 // is implemented as a real favorite (type='teacher') rather than a decorative
 // toggle, so it persists and is student-specific.
 export default function Teachers() {
+  const navigate = useNavigate()
   const { stream } = useAuth()
   const { t, dir } = useLang()
   const { isFavorite, toggleFavorite } = useFavorites()
@@ -51,10 +53,11 @@ export default function Teachers() {
               {sorted.map((tc) => {
                 const active = isFavorite('teacher', tc.id)
                 return (
-                  <div key={tc.id} className="p-5 rounded-2xl bg-surface border border-border-soft flex flex-col items-center text-center gap-3">
+                  <div key={tc.id} onClick={() => navigate(`/teachers/${tc.id}`)}
+                    className="p-5 rounded-2xl bg-surface border border-border-soft flex flex-col items-center text-center gap-3 cursor-pointer hover:border-primary/50 hover:-translate-y-0.5 transition-all">
                     <div className="w-20 h-20 rounded-full overflow-hidden bg-primary-soft dark:bg-primary/15 flex items-center justify-center text-2xl font-heading font-bold text-primary-strong">
                       {tc.photoURL
-                        ? <img src={tc.photoURL} alt="" className="w-full h-full object-cover" />
+                        ? <img src={tc.photoURL} alt="" className="w-full h-full object-cover" loading="lazy" />
                         : (tc.name || '?').trim().charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -63,7 +66,7 @@ export default function Teachers() {
                     </div>
                     {tc.bio && <p className="text-xs text-ink-muted line-clamp-2">{tc.bio}</p>}
                     <button
-                      onClick={() => toggleFavorite({ type: 'teacher', contentId: tc.id, title: tc.name })}
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite({ type: 'teacher', contentId: tc.id, title: tc.name, photoURL: tc.photoURL, specialization: tc.specialization }) }}
                       className={`mt-1 px-4 py-1.5 rounded-pill text-xs font-semibold transition-colors
                                   ${active ? 'bg-primary text-white' : 'border border-border-card text-ink hover:border-primary/50'}`}
                     >

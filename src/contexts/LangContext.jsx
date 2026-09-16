@@ -107,7 +107,10 @@ const translations = {
     'loading-deck': 'Loading deck…', 'card-progress': 'Card {current} / {total}',
     'interactive-questions': '{count} interactive questions', 'session-complete': 'Session complete!',
     'how-did-that-go': 'How did that go?', 'saved-see-progress': 'Saved — see your progress on the deck browser.',
-    mute: 'Mute', unmute: 'Unmute'
+    mute: 'Mute', unmute: 'Unmute',
+    'now-playing': 'Now playing', 'open-externally': 'Open externally', 'video-unavailable': "This video link isn't supported for playback here.",
+    'n-courses': '{count} courses', teacher: 'Teacher', 'switch-sound': 'Sound', volume: 'Volume',
+    'sound-chime': 'Chime', 'sound-bell': 'Bell', 'sound-digital': 'Digital', 'sound-soft': 'Soft'
   },
   fr: {
     home: 'Accueil', courses: 'Cours', library: 'Bibliothèque', pomodoro: 'Pomodoro',
@@ -197,7 +200,10 @@ const translations = {
     'loading-deck': 'Chargement du paquet…', 'card-progress': 'Carte {current} / {total}',
     'interactive-questions': '{count} questions interactives', 'session-complete': 'Session terminée !',
     'how-did-that-go': "Comment ça s'est passé ?", 'saved-see-progress': 'Enregistré — consultez votre progression dans la liste des paquets.',
-    mute: 'Muet', unmute: 'Activer le son'
+    mute: 'Muet', unmute: 'Activer le son',
+    'now-playing': 'En cours de lecture', 'open-externally': 'Ouvrir en externe', 'video-unavailable': "Ce lien vidéo n'est pas pris en charge ici.",
+    'n-courses': '{count} cours', teacher: 'Enseignant', 'switch-sound': 'Son', volume: 'Volume',
+    'sound-chime': 'Carillon', 'sound-bell': 'Cloche', 'sound-digital': 'Numérique', 'sound-soft': 'Doux'
   },
   ar: {
     home: 'الرئيسية', courses: 'الدورات', library: 'المكتبة', pomodoro: 'بومودورو',
@@ -287,7 +293,10 @@ const translations = {
     'loading-deck': 'جارٍ تحميل المجموعة…', 'card-progress': 'البطاقة {current} / {total}',
     'interactive-questions': '{count} سؤال تفاعلي', 'session-complete': 'اكتملت الجلسة!',
     'how-did-that-go': 'كيف كانت تجربتك؟', 'saved-see-progress': 'تم الحفظ — راجع تقدمك في قائمة المجموعات.',
-    mute: 'كتم الصوت', unmute: 'إلغاء الكتم'
+    mute: 'كتم الصوت', unmute: 'إلغاء الكتم',
+    'now-playing': 'قيد التشغيل الآن', 'open-externally': 'فتح خارجيًا', 'video-unavailable': 'رابط هذا الفيديو غير مدعوم للتشغيل هنا.',
+    'n-courses': '{count} دورة', teacher: 'الأستاذ', 'switch-sound': 'الصوت', volume: 'مستوى الصوت',
+    'sound-chime': 'جرس', 'sound-bell': 'ناقوس', 'sound-digital': 'رقمي', 'sound-soft': 'هادئ'
   }
 }
 

@@ -73,6 +73,11 @@ export async function getTeachers() {
   return mapDocs(snap).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 }
 
+export async function getTeacherById(id) {
+  const s = await getDoc(doc(db, 'teachers', id))
+  return s.exists() ? { id: s.id, ...s.data() } : null
+}
+
 export function createTeacher({ name, photoURL = '', bio = '', specialization = '', assignedStreamIds = [] }, adminId) {
   return addDoc(collection(db, 'teachers'), {
     name: name.trim(), photoURL, bio, specialization, assignedStreamIds,

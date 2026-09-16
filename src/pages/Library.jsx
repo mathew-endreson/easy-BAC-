@@ -7,23 +7,20 @@ import { useLang } from '../contexts/LangContext.jsx'
 import { useFavorites } from '../contexts/FavoritesContext.jsx'
 import { streamLabel } from '../constants/streams.js'
 import { getSubjects } from '../services/academic.js'
-import { getResources } from '../services/content.js'
 import { PageHeader, SubjectCard, EmptyState, Spinner, LoadingGrid, StatusBadge } from '../components/ui/kit.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
-// Library sidebar sections, matching the platform's Figma reference (Overview /
-// My Saves / My Resumes / My Flashcards / My Tests / My Teachers). 'overview',
-// 'saves' and 'resumes' render inline (real data, fetched on demand); the rest
-// navigate to their dedicated flow — quizzes/flashcards need a subject picked
-// first (see Games.jsx) and Teachers has its own full page. (Figma's "My Books"
-// isn't a distinct content type in this data model, so it isn't duplicated here
-// as a second identical tab — see UnitView/Resources for the real content.)
+// Library sidebar sections. 'overview' and 'saves' render inline (real data,
+// fetched on demand); the rest navigate to their dedicated flow. Resources is
+// deliberately not a section here — Subject → Unit browsing already surfaces
+// the same lessons/summaries per unit, so a separate flat Resources tab would
+// just duplicate that path (the /resources route itself still exists, just
+// unlinked from primary navigation).
 const FAV_TYPE_LABEL = { resource: 'resources', quiz: 'quizzes', flashcard: 'flashcards', teacher: 'teachers' }
 
 const SECTIONS = [
   { id: 'overview', labelKey: 'subjects', mode: 'inline' },
   { id: 'saves', labelKey: 'nav-favorites', mode: 'inline' },
-  { id: 'resumes', labelKey: 'resources', mode: 'inline' },
   { id: 'flashcards', labelKey: 'flashcards', mode: 'link', to: '/flashcard-decks' },
   { id: 'tests', labelKey: 'quizzes', mode: 'link', to: '/quizzes' },
   { id: 'courses', labelKey: 'video-courses', mode: 'link', to: '/courses' },
@@ -42,11 +39,6 @@ export default function Library() {
   const [subjError, setSubjError] = useState('')
   const [search, setSearch] = useState('')
 
-  const [resources, setResources] = useState([])
-  const [resLoading, setResLoading] = useState(false)
-  const [resError, setResError] = useState('')
-  const [resFetched, setResFetched] = useState(false)
-
   useEffect(() => {
     let cancelled = false
     setSubjLoading(true)
@@ -56,18 +48,6 @@ export default function Library() {
       .finally(() => { if (!cancelled) setSubjLoading(false) })
     return () => { cancelled = true }
   }, [stream])
-
-  // Resources are only fetched once the resources-backed tab is actually opened.
-  useEffect(() => {
-    if (section !== 'resumes' || resFetched) return
-    let cancelled = false
-    setResLoading(true)
-    getResources(stream)
-      .then((r) => { if (!cancelled) { setResources(r); setResFetched(true) } })
-      .catch((e) => { if (!cancelled) setResError(e.message) })
-      .finally(() => { if (!cancelled) setResLoading(false) })
-    return () => { cancelled = true }
-  }, [section, stream, resFetched])
 
   const visibleSubjects = useMemo(() => {
     if (!search.trim()) return subjects
@@ -136,12 +116,7 @@ export default function Library() {
                 {subjLoading ? <LoadingGrid count={6} className="grid-cols-3 max-md:grid-cols-2 max-[520px]:grid-cols-1" />
                   : subjError ? <EmptyState icon={<Icon name="warning" />} title={t('err-generic')} description={subjError} />
                   : visibleSubjects.length === 0 ? (
-                    <EmptyState
-                      icon={<Icon name="book" />}
-                      title={t('no-subjects-title')}
-                      description={t('no-subjects-desc')}
-                      action={<button onClick={() => navigate('/resources')} className="px-5 py-2.5 rounded-pill bg-primary text-white font-semibold hover:bg-primary-strong transition-colors">{t('explore-library')}</button>}
-                    />
+                    <EmptyState icon={<Icon name="book" />} title={t('no-subjects-title')} description={t('no-subjects-desc')} />
                   ) : (
                     <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
                       {visibleSubjects.map((s) => (
@@ -166,29 +141,6 @@ export default function Library() {
                           <FavoriteButton item={{ type: fav.type, contentId: fav.contentId, title: fav.title, subjectId: fav.subjectId, unitId: fav.unitId, stream: fav.stream }} />
                         </div>
                         <h4 className="mt-2 font-heading font-bold text-ink line-clamp-2">{fav.title || t('content')}</h4>
-                      </div>
-                    ))}
-                  </div>
-                )
-            )}
-
-            {section === 'resumes' && (
-              resLoading ? <Spinner label={t('loading')} />
-                : resError ? <EmptyState icon={<Icon name="warning" />} title={t('err-generic')} description={resError} />
-                : resources.length === 0 ? <EmptyState icon={<Icon name="folder" />} title={t('no-content-title')} description={t('no-content-desc')} />
-                : (
-                  <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
-                    {resources.map((res) => (
-                      <div key={res.id} className="flex flex-col justify-between bg-surface border border-border-soft rounded-2xl p-4 min-h-[160px]">
-                        <div>
-                          <div className="flex items-start justify-between">
-                            <span className="w-9 h-9 shrink-0 rounded-lg bg-surface-muted flex items-center justify-center text-ink-muted"><Icon name={res.type === 'drive' ? 'folder' : 'video'} className="w-[18px] h-[18px]" /></span>
-                            <FavoriteButton item={{ type: 'resource', contentId: res.id, title: res.title, subjectId: res.subjectId, unitId: res.unitId, stream: res.stream }} />
-                          </div>
-                          {res.subject && <StatusBadge tone="neutral">{res.subject}</StatusBadge>}
-                          <h4 className="mt-2 font-heading font-bold text-ink line-clamp-2">{res.title}</h4>
-                        </div>
-                        <button onClick={() => window.open(res.url, '_blank', 'noopener')} className="mt-3 text-sm font-semibold text-primary hover:underline text-start">{t('start')} →</button>
                       </div>
                     ))}
                   </div>

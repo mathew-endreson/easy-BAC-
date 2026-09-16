@@ -81,7 +81,7 @@ export default function Profile() {
           <Link to="/progress" className="text-sm font-semibold text-primary hover:underline">{t('view-full-progress')} →</Link>
         </div>
         <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[420px]:grid-cols-1">
-          <StatCard icon="tomato" value={completedSessions} label={t('pomodoro')} />
+          <StatCard icon="tomato" value={completedSessions} label={t('pomodoro')} to="/pomodoro" />
           <StatCard icon="checklist" value={completedCount} label={t('todo-list')} />
           <StatCard icon="star" value={favoritesCount} label={t('nav-favorites')} to="/favorites" />
           {loading ? (

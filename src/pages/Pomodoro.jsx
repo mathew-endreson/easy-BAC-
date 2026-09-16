@@ -10,10 +10,12 @@ import Icon from '../components/ui/Icon.jsx'
 // and survives navigation, refresh, language and theme changes.
 export default function Pomodoro() {
   const { t, dir } = useLang()
-  const { mode, setMode, remaining, isRunning, toggle, reset, modes, setMuted: setPomoMuted } = usePomodoro()
+  const {
+    mode, setMode, remaining, isRunning, toggle, reset, modes,
+    sounds, soundId, volume, muted, setSoundId, setVolume, setMuted, previewSound
+  } = usePomodoro()
   const { tasks, addTask, toggleTask, deleteTask, loading } = useTodos()
   const [todoInput, setTodoInput] = useState('')
-  const [muted, setMuted] = useState(false)
 
   function submitTodo() {
     if (!todoInput.trim()) return
@@ -21,10 +23,9 @@ export default function Pomodoro() {
     setTodoInput('')
   }
 
-  function toggleMute() {
-    const next = !muted
-    setMuted(next)
-    setPomoMuted(next)
+  function chooseSound(id) {
+    setSoundId(id)
+    previewSound(id)
   }
 
   return (
@@ -40,7 +41,7 @@ export default function Pomodoro() {
               <h4>{t(modes.find((m) => m.id === mode)?.key || 'focus-timer')}</h4>
               <div className="flex items-center gap-4">
                 <button
-                  onClick={toggleMute}
+                  onClick={() => setMuted(!muted)}
                   aria-pressed={muted}
                   aria-label={muted ? t('unmute') : t('mute')}
                   title={muted ? t('unmute') : t('mute')}
@@ -78,6 +79,24 @@ export default function Pomodoro() {
                 className="min-h-11 px-7 flex items-center justify-center border border-primary-deep dark:border-border-card bg-transparent rounded-pill cursor-pointer text-primary-deep dark:text-ink">
                 <Icon name="refresh" className="w-4 h-4" />
               </button>
+            </div>
+
+            <div className={`relative z-10 mt-8 flex flex-col items-center gap-3 w-full max-w-xs transition-opacity ${muted ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                {sounds.map((s) => (
+                  <button key={s.id} onClick={() => chooseSound(s.id)}
+                    className={`h-8 px-3 rounded-full text-xs font-medium transition-colors ${soundId === s.id ? 'bg-primary-strong text-white' : 'border border-border-card text-ink-muted hover:text-ink'}`}>
+                    {t(s.labelKey)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 w-full">
+                <Icon name="volume" className="w-4 h-4 text-ink-muted shrink-0" />
+                <input type="range" min="0" max="1" step="0.05" value={volume}
+                  onChange={(e) => setVolume(Number(e.target.value))}
+                  onMouseUp={() => previewSound(soundId)} onTouchEnd={() => previewSound(soundId)}
+                  aria-label={t('volume')} className="flex-1 accent-primary" />
+              </div>
             </div>
           </div>
         </div>

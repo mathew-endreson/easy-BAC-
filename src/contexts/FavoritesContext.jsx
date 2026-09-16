@@ -31,7 +31,10 @@ export function FavoritesProvider({ children }) {
   const favSet = useMemo(() => new Set(favorites.map((f) => keyOf(f.type, f.contentId))), [favorites])
   const isFavorite = useCallback((type, contentId) => favSet.has(keyOf(type, contentId)), [favSet])
 
-  // item: { type, contentId, title?, subjectId?, unitId?, stream? }
+  // item: { type, contentId, title?, subjectId?, unitId?, stream?, photoURL?, specialization? }
+  // photoURL/specialization are only meaningful for type='teacher' (a snapshot
+  // at favorite-time, same tradeoff as `title` — good enough for a favorites
+  // list, not meant to track live edits to the teacher's profile).
   const toggleFavorite = useCallback(async (item) => {
     if (!user) return
     const ref = doc(db, 'users', user.uid, 'favorites', docIdOf(item.type, item.contentId))
@@ -45,6 +48,8 @@ export function FavoritesProvider({ children }) {
         subjectId: item.subjectId || '',
         unitId: item.unitId || '',
         stream: item.stream || '',
+        photoURL: item.photoURL || '',
+        specialization: item.specialization || '',
         createdAt: serverTimestamp()
       })
     }

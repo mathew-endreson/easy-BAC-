@@ -6,15 +6,17 @@ import ThemeToggle from './ThemeToggle.jsx'
 import UserMenu from './UserMenu.jsx'
 import Icon from './ui/Icon.jsx'
 
-// Student navigation. Library is now the default landing page (Home was
-// removed — it duplicated Library/Progress without adding anything of its
-// own). Progress / Favorites / Profile are first-class destinations (§7).
-// Pomodoro stays globally reachable via the floating widget. Games/Calculator
-// are not linked from anywhere in this nav or Library anymore (direct-URL only).
+// Student navigation. Subjects(Library) / Quizzes / Flashcards / Favorites /
+// Profile — a 5-item bottom bar (client-confirmed structure). Teachers is
+// reachable from inside Library's sidebar; Progress from Profile's "View full
+// progress" link; Pomodoro+To-Do from the persistent floating widget plus a
+// link on Profile. Games/Calculator are not linked from anywhere (direct-URL
+// only), and Resources no longer has a dedicated destination — Subject → Unit
+// browsing covers the same content.
 const items = [
   { to: '/library', icon: 'library', key: 'library' },
-  { to: '/teachers', icon: 'teacher', key: 'nav-teachers' },
-  { to: '/progress', icon: 'chart', key: 'nav-progress' },
+  { to: '/quizzes', icon: 'quiz', key: 'quizzes' },
+  { to: '/flashcard-decks', icon: 'cards', key: 'flashcards' },
   { to: '/favorites', icon: 'star', key: 'nav-favorites' },
   { to: '/profile', icon: 'user', key: 'nav-profile' }
 ]

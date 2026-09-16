@@ -169,10 +169,12 @@ export function SubjectCard({ icon = <Icon name="book" />, name, progress, meta,
   return (
     <button type="button" onClick={onClick} className="text-start w-full rounded-2xl bg-surface border border-border-soft overflow-hidden hover:border-primary/50 hover:-translate-y-0.5 transition-all">
       {coverURL && (
-        <div className="h-24 w-full relative">
-          <img src={coverURL} alt="" className="w-full h-full object-cover" />
-          <span className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <span className="absolute bottom-2 start-3 end-3 font-heading font-bold text-white truncate">{name}</span>
+        <div className="h-32 w-full relative">
+          <img src={coverURL} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <span className="absolute inset-0 bg-black/35" />
+          <span className="absolute inset-0 flex items-center justify-center text-center px-3">
+            <span className="font-heading font-bold text-lg text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] line-clamp-2">{name}</span>
+          </span>
         </div>
       )}
       <div className="p-5">

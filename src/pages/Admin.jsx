@@ -9,6 +9,7 @@ import AdminAcademic from './admin/AdminAcademic.jsx'
 import AdminStudents from './admin/AdminStudents.jsx'
 import AdminTeachers from './admin/AdminTeachers.jsx'
 import AdminCourses from './admin/AdminCourses.jsx'
+import AdminMigrations from './admin/AdminMigrations.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
 const emptyQuestion = () => ({ question: '', options: ['', '', '', ''], correctAnswer: '' })
@@ -230,7 +231,8 @@ export default function Admin() {
           { id: 'add-quiz', label: 'Add Quiz', icon: 'quiz' },
           { id: 'add-flash', label: 'Add Flashcard', icon: 'cards' },
           { id: 'add-resource', label: 'Add Resource', icon: 'folder' },
-          { id: 'view-data', label: 'View Data', icon: 'chart' }
+          { id: 'view-data', label: 'View Data', icon: 'chart' },
+          { id: 'migrations', label: 'Maintenance', icon: 'settings' }
         ].map((tabItem) => (
           <button
             key={tabItem.id}
@@ -260,6 +262,7 @@ export default function Admin() {
         {tab === 'teachers' && <AdminTeachers showToast={showToast} />}
         {tab === 'courses' && <AdminCourses showToast={showToast} />}
         {tab === 'academic' && <AdminAcademic showToast={showToast} />}
+        {tab === 'migrations' && <AdminMigrations showToast={showToast} />}
 
         {tab === 'add-quiz' && (
           <section className="bg-surface p-10 rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[30px] fade-in-anim max-[850px]:p-5 max-[850px]:rounded-xl">

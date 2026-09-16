@@ -37,7 +37,7 @@ export default function Favorites() {
       const res = await getContentById('resources', fav.contentId, stream)
       if (res?.url) window.open(res.url, '_blank', 'noopener')
     } else if (fav.type === 'teacher') {
-      navigate('/teachers')
+      navigate(`/teachers/${fav.contentId}`)
     } else if (fav.unitId) {
       navigate(`/library/unit/${fav.unitId}`)
     }
@@ -69,6 +69,21 @@ export default function Favorites() {
           ) : (
             <div className="stagger-children grid grid-cols-3 gap-4 max-md:grid-cols-2 max-[520px]:grid-cols-1">
               {visible.map((fav) => {
+                if (fav.type === 'teacher') {
+                  return (
+                    <div key={fav.id} className="flex flex-col items-center text-center gap-2 bg-surface border border-border-soft rounded-2xl p-5">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-primary-soft dark:bg-primary/15 flex items-center justify-center text-xl font-heading font-bold text-primary-strong shrink-0">
+                        {fav.photoURL ? <img src={fav.photoURL} alt="" className="w-full h-full object-cover" /> : (fav.title || '?').trim().charAt(0).toUpperCase()}
+                      </div>
+                      <h4 className="font-heading font-bold text-ink line-clamp-2">{fav.title || t('content')}</h4>
+                      {fav.specialization && <p className="text-xs text-ink-muted">{fav.specialization}</p>}
+                      <div className="flex items-center gap-2 mt-1">
+                        <button onClick={() => open(fav)} className="px-4 py-1.5 rounded-pill text-xs font-semibold border border-border-card text-ink hover:border-primary/50 transition-colors">{t('teacher')}</button>
+                        <FavoriteButton item={{ type: 'teacher', contentId: fav.contentId, title: fav.title }} />
+                      </div>
+                    </div>
+                  )
+                }
                 const meta = TYPE_META[fav.type] || { icon: 'book', labelKey: 'content' }
                 return (
                   <div key={fav.id} className="flex flex-col bg-surface border border-border-soft rounded-2xl p-4">

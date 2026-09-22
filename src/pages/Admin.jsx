@@ -15,23 +15,33 @@ import Icon from '../components/ui/Icon.jsx'
 const emptyQuestion = () => ({ question: '', options: ['', '', '', ''], correctAnswer: '' })
 const emptyFlash = () => ({ question: '', answer: '' })
 
-// Shared stream <select>. Empty value = "All streams" (content with no stream is
-// visible to every student until tagged — matches the platform's legacy-content
-// policy).
-function StreamSelect({ value, onChange }) {
+// Shared multi-select stream picker. An empty selection = "All streams" (content
+// with no stream tag is visible to every student — matches the platform's
+// legacy-content policy). Content stores the selection as `streams: []`, plus
+// `stream` (the first pick, or '') so older code/records keep working.
+function StreamMultiSelect({ value, onChange }) {
+  const toggle = (id) => onChange(value.includes(id) ? value.filter((s) => s !== id) : [...value, id])
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none"
-    >
-      <option value="">🌐 All streams (visible to everyone)</option>
-      {STREAMS.map((s) => (
-        <option key={s.id} value={s.id}>{s.icon} {streamLabel(s.id, 'ar')} — {streamLabel(s.id, 'fr')}</option>
-      ))}
-    </select>
+    <div>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => onChange([])}
+          className={`text-sm px-3.5 py-2 rounded-full border cursor-pointer ${value.length === 0 ? 'bg-primary-soft dark:bg-primary/15 border-primary-strong text-primary-strong' : 'border-border-soft text-ink-muted'}`}>
+          🌐 All streams
+        </button>
+        {STREAMS.map((s) => (
+          <button key={s.id} type="button" onClick={() => toggle(s.id)}
+            className={`text-sm px-3.5 py-2 rounded-full border cursor-pointer ${value.includes(s.id) ? 'bg-primary-soft dark:bg-primary/15 border-primary-strong text-primary-strong' : 'border-border-soft text-ink-muted'}`}>
+            {s.icon} {streamLabel(s.id, 'ar')}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-ink-muted mt-1.5">Select one or more streams — or leave on "All streams" to show it to everyone.</p>
+    </div>
   )
 }
+
+// A record's stream list, tolerating legacy single-`stream` documents.
+const streamsOf = (item) => (item?.streams?.length ? item.streams : item?.stream ? [item.stream] : [])
 
 export default function Admin() {
   const navigate = useNavigate()
@@ -41,21 +51,22 @@ export default function Admin() {
 
   // Quiz form
   const [qSubject, setQSubject] = useState('')
-  const [qStream, setQStream] = useState('')
+  const [qStreams, setQStreams] = useState([])
   const [qSubjectId, setQSubjectId] = useState('')
   const [qUnitId, setQUnitId] = useState('')
   const [questions, setQuestions] = useState([emptyQuestion()])
 
   // Flashcard form
   const [fSubject, setFSubject] = useState('')
-  const [fStream, setFStream] = useState('')
+  const [fStreams, setFStreams] = useState([])
   const [fSubjectId, setFSubjectId] = useState('')
   const [fUnitId, setFUnitId] = useState('')
   const [fSetTitle, setFSetTitle] = useState('')
   const [flashcards, setFlashcards] = useState([emptyFlash()])
 
   // Resource form
-  const [resForm, setResForm] = useState({ subject: '', title: '', type: 'drive', url: '', stream: '', subjectId: '', unitId: '' })
+  const emptyRes = { subject: '', title: '', type: 'drive', url: '', streams: [], subjectId: '', unitId: '' }
+  const [resForm, setResForm] = useState(emptyRes)
 
   // Edit state
   const [editing, setEditing] = useState({ id: null, type: null })
@@ -76,7 +87,8 @@ export default function Admin() {
     e.preventDefault()
     const data = {
       subject: qSubject,
-      stream: qStream,
+      streams: qStreams,
+      stream: qStreams[0] || '', // legacy scalar, kept for any older code reading it directly
       subjectId: qSubjectId,
       unitId: qUnitId,
       title: qSubject + ' Quiz',
@@ -96,7 +108,7 @@ export default function Admin() {
         showToast('Quiz saved!')
       }
       setQSubject('')
-      setQStream('')
+      setQStreams([])
       setQSubjectId('')
       setQUnitId('')
       setQuestions([emptyQuestion()])
@@ -110,7 +122,7 @@ export default function Admin() {
   async function saveFlashcards(e) {
     e.preventDefault()
     try {
-      const meta = { subject: fSubject, stream: fStream, subjectId: fSubjectId, unitId: fUnitId, setTitle: fSetTitle || fSubject }
+      const meta = { subject: fSubject, streams: fStreams, stream: fStreams[0] || '', subjectId: fSubjectId, unitId: fUnitId, setTitle: fSetTitle || fSubject }
       if (editing.type === 'flashcards' && editing.id) {
         // Preserve the card's existing setId (if any) — editing one card must
         // not split it out of its deck.
@@ -126,7 +138,7 @@ export default function Admin() {
         showToast(`Saved ${flashcards.length} Flashcards!`)
       }
       setFSubject('')
-      setFStream('')
+      setFStreams([])
       setFSubjectId('')
       setFUnitId('')
       setFSetTitle('')
@@ -141,15 +153,16 @@ export default function Admin() {
   async function saveResource(e) {
     e.preventDefault()
     if (!resForm.url.startsWith('http')) return alert('Please enter a valid URL')
+    const data = { ...resForm, stream: resForm.streams[0] || '' } // legacy scalar, kept for any older code reading it directly
     try {
       if (editing.type === 'resources' && editing.id) {
-        await updateDoc(doc(db, 'resources', editing.id), resForm)
+        await updateDoc(doc(db, 'resources', editing.id), data)
         showToast('Resource Updated!')
       } else {
-        await addDoc(collection(db, 'resources'), resForm)
+        await addDoc(collection(db, 'resources'), data)
         showToast('Resource Saved!')
       }
-      setResForm({ subject: '', title: '', type: 'drive', url: '', stream: '', subjectId: '', unitId: '' })
+      setResForm(emptyRes)
       if (editing.type === 'resources') {
         await fetchList('resources')
         resetEdit()
@@ -185,7 +198,7 @@ export default function Admin() {
     if (col === 'quizzes') {
       setTab('add-quiz')
       setQSubject(item.subject || '')
-      setQStream(item.stream || '')
+      setQStreams(streamsOf(item))
       setQSubjectId(item.subjectId || '')
       setQUnitId(item.unitId || '')
       setQuestions((item.questions || []).map((q) => ({
@@ -196,14 +209,14 @@ export default function Admin() {
     } else if (col === 'flashcards') {
       setTab('add-flash')
       setFSubject(item.subject || '')
-      setFStream(item.stream || '')
+      setFStreams(streamsOf(item))
       setFSubjectId(item.subjectId || '')
       setFUnitId(item.unitId || '')
       setFSetTitle(item.setTitle || '')
       setFlashcards([{ question: item.question || '', answer: item.answer || '' }])
     } else if (col === 'resources') {
       setTab('add-resource')
-      setResForm({ subject: item.subject || '', title: item.title || '', type: item.type || 'drive', url: item.url || '', stream: item.stream || '', subjectId: item.subjectId || '', unitId: item.unitId || '' })
+      setResForm({ subject: item.subject || '', title: item.title || '', type: item.type || 'drive', url: item.url || '', streams: streamsOf(item), subjectId: item.subjectId || '', unitId: item.unitId || '' })
     }
   }
 
@@ -273,11 +286,11 @@ export default function Admin() {
                 <input value={qSubject} onChange={(e) => setQSubject(e.target.value)} required placeholder="e.g. History, Math, SVT..." className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border focus:border-primary-strong focus:outline-none" />
               </div>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream</label>
-                <StreamSelect value={qStream} onChange={(v) => { setQStream(v); setQSubjectId(''); setQUnitId('') }} />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream(s)</label>
+                <StreamMultiSelect value={qStreams} onChange={(v) => { setQStreams(v); setQSubjectId(''); setQUnitId('') }} />
               </div>
               <div className="mb-6">
-                <SubjectUnitPicker stream={qStream} subjectId={qSubjectId} unitId={qUnitId} onSubjectChange={setQSubjectId} onUnitChange={setQUnitId} />
+                <SubjectUnitPicker stream={qStreams[0] || ''} subjectId={qSubjectId} unitId={qUnitId} onSubjectChange={setQSubjectId} onUnitChange={setQUnitId} />
               </div>
 
               {questions.map((q, i) => (
@@ -326,11 +339,11 @@ export default function Admin() {
                 <p className="text-xs text-ink-muted mt-1.5">All cards saved together below become one deck students study and track together.</p>
               </div>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream</label>
-                <StreamSelect value={fStream} onChange={(v) => { setFStream(v); setFSubjectId(''); setFUnitId('') }} />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream(s)</label>
+                <StreamMultiSelect value={fStreams} onChange={(v) => { setFStreams(v); setFSubjectId(''); setFUnitId('') }} />
               </div>
               <div className="mb-6">
-                <SubjectUnitPicker stream={fStream} subjectId={fSubjectId} unitId={fUnitId} onSubjectChange={setFSubjectId} onUnitChange={setFUnitId} />
+                <SubjectUnitPicker stream={fStreams[0] || ''} subjectId={fSubjectId} unitId={fUnitId} onSubjectChange={setFSubjectId} onUnitChange={setFUnitId} />
               </div>
               {flashcards.map((fc, i) => (
                 <div key={i} className="border border-border-soft p-5 rounded-xl mb-5">
@@ -365,12 +378,12 @@ export default function Admin() {
                 <input required value={resForm.subject} onChange={(e) => setResForm({ ...resForm, subject: e.target.value })} className="w-full p-3.5 border-2 border-border-card rounded-xl text-[15px] box-border" />
               </div>
               <div className="mb-6">
-                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream</label>
-                <StreamSelect value={resForm.stream} onChange={(v) => setResForm({ ...resForm, stream: v, subjectId: '', unitId: '' })} />
+                <label className="block mb-2.5 font-semibold text-sm text-ink-muted">BAC Stream(s)</label>
+                <StreamMultiSelect value={resForm.streams} onChange={(v) => setResForm((f) => ({ ...f, streams: v, subjectId: '', unitId: '' }))} />
               </div>
               <div className="mb-6">
                 <SubjectUnitPicker
-                  stream={resForm.stream}
+                  stream={resForm.streams[0] || ''}
                   subjectId={resForm.subjectId}
                   unitId={resForm.unitId}
                   onSubjectChange={(v) => setResForm((f) => ({ ...f, subjectId: v }))}
@@ -415,13 +428,16 @@ export default function Admin() {
                 const summary = item.title
                   || (item.question ? (item.question.length > 30 ? item.question.slice(0, 30) : item.question) : null)
                   || (item.questions ? `Quiz: ${item.questions.length} questions` : 'No Title')
+                const itemStreams = streamsOf(item)
                 return (
                   <div key={item.id} className="flex justify-between items-center p-[15px] border-b border-border-soft max-[850px]:flex-col max-[850px]:items-start max-[850px]:gap-2.5">
                     <span>
                       <strong>[{item.subject}]</strong> {summary}
-                      <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-surface-muted text-ink-muted">
-                        {item.stream ? streamLabel(item.stream, 'ar') : '🌐 All'}
-                      </span>
+                      {itemStreams.length === 0 ? (
+                        <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-surface-muted text-ink-muted">🌐 All</span>
+                      ) : itemStreams.map((id) => (
+                        <span key={id} className="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-surface-muted text-ink-muted">{streamLabel(id, 'ar')}</span>
+                      ))}
                     </span>
                     <div className="flex gap-2.5 items-center">
                       <span onClick={() => startEdit(dataList.col, item)} className="text-ink cursor-pointer font-bold bg-surface-muted py-[5px] px-3 rounded-lg">Edit</span>

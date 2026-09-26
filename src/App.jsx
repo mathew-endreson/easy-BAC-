@@ -25,6 +25,7 @@ import Register from './pages/Register.jsx'
 import Onboarding from './pages/Onboarding.jsx'
 import NotFound from './pages/NotFound.jsx'
 import PomodoroWidget from './components/PomodoroWidget.jsx'
+import ActivityTracker from './components/ActivityTracker.jsx'
 import { FullScreenLoader, RequireAuth, RequireProfile, RequireAdmin, RedirectIfAuthed } from './components/RouteGuards.jsx'
 
 // Admin is a large, rarely-visited (super_admin only) bundle — split it out of
@@ -83,6 +84,7 @@ export default function App() {
     {/* Persistent, session-global Pomodoro control — outside <Routes> so it
         never unmounts on navigation. */}
     <PomodoroWidget />
+    <ActivityTracker />
     </>
   )
 }

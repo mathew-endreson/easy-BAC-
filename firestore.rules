@@ -128,6 +128,20 @@ service cloud.firestore {
       allow update, delete: if false; // logs are append-only
     }
 
+    // ---- student activity tracking ----------------------------------------
+    // activityLogs: append-only; a student may only write events under their own
+    // uid. presence: one heartbeat doc per student. Both readable by admins only.
+    match /activityLogs/{id} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /presence/{uid} {
+      allow read: if isAdmin();
+      allow create, update: if isOwner(uid) && request.resource.data.uid == request.auth.uid;
+      allow delete: if false;
+    }
+
     // ---- platform settings ------------------------------------------------
     match /settings/{id} {
       allow read: if isSignedIn();

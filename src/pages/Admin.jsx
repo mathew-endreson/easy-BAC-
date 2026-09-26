@@ -10,6 +10,7 @@ import AdminStudents from './admin/AdminStudents.jsx'
 import AdminTeachers from './admin/AdminTeachers.jsx'
 import AdminCourses from './admin/AdminCourses.jsx'
 import AdminMigrations from './admin/AdminMigrations.jsx'
+import AdminActivity from './admin/AdminActivity.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
 const emptyQuestion = () => ({ question: '', options: ['', '', '', ''], correctAnswer: '' })
@@ -238,6 +239,7 @@ export default function Admin() {
         </div>
         {[
           { id: 'students', label: 'Students', icon: 'users' },
+          { id: 'activity', label: 'Activity', icon: 'clock' },
           { id: 'teachers', label: 'Teachers', icon: 'teacher' },
           { id: 'courses', label: 'Courses', icon: 'video' },
           { id: 'academic', label: 'Academic Structure', icon: 'library' },
@@ -272,6 +274,7 @@ export default function Admin() {
 
       <main className="p-10 max-w-[1000px] mx-auto w-full max-[850px]:p-[15px]">
         {tab === 'students' && <AdminStudents showToast={showToast} />}
+        {tab === 'activity' && <AdminActivity />}
         {tab === 'teachers' && <AdminTeachers showToast={showToast} />}
         {tab === 'courses' && <AdminCourses showToast={showToast} />}
         {tab === 'academic' && <AdminAcademic showToast={showToast} />}

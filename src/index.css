@@ -21,6 +21,7 @@
   --c-bg-page: 255 255 255;
   --c-surface: 255 255 255;
   --c-surface-muted: 248 249 250;
+  --c-accent: 171 16 23;
   color-scheme: light;
 }
 
@@ -36,6 +37,7 @@
   --c-bg-page: 15 17 22;
   --c-surface: 26 30 38;
   --c-surface-muted: 33 38 48;
+  --c-accent: 229 89 91;
   color-scheme: dark;
 }
 
@@ -52,6 +54,25 @@
     letter-spacing: -0.02em;
   }
   hr { border: none; height: 0.5px; @apply bg-border-soft; }
+
+  /* Arabic letters join, so any tracking breaks them apart; the script also
+     needs more leading than Latin to keep its ascenders and dots clear. */
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3,
+  [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6 {
+    letter-spacing: 0;
+    line-height: 1.35;
+  }
+
+  /* Keyboard focus only, so mouse users never see it. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 3px;
+  }
+  .on-brand :focus-visible { outline-color: #fff; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
 }
 
 @layer utilities {
@@ -120,6 +141,7 @@
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 .btn-reactive:hover { letter-spacing: 1px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+[dir="rtl"] .btn-reactive:hover { letter-spacing: 0; }
 .btn-reactive:active { transform: scale(0.92) translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
 /* ──────────────────────────────────────────────────────────────────
@@ -128,25 +150,28 @@
 .faq-answer {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.4s ease, padding 0.4s ease;
-  padding: 0 32px;
-  background: #fff;
+  visibility: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease, visibility 0.4s;
+  padding: 0 28px;
 }
-.faq-item.active .faq-answer { max-height: 500px; padding: 16px 32px; }
-.faq-item.active .faq-icon { transform: rotate(45deg); }
-.faq-icon { transition: transform 0.3s ease; font-size: 20px; line-height: 1; }
+.faq-item.active .faq-answer { max-height: 500px; padding: 0 28px 22px; visibility: visible; }
+.faq-item.active .faq-icon { transform: rotate(45deg); background: #AB1017; color: #fff; }
+.faq-icon { transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease; }
 
 /* ──────────────────────────────────────────────────────────────────
    Hero play button — circle + triangle
    ────────────────────────────────────────────────────────────────── */
 .play-icon {
+  display: block;
+  flex-shrink: 0;
   width: 59px;
   height: 59px;
-  background: black;
+  background: #410702;
   border-radius: 50%;
   position: relative;
   transition: all 0.3s ease;
 }
+.dark .play-icon { background: rgba(255, 255, 255, 0.12); }
 .play-icon::before {
   content: "";
   position: absolute;
@@ -160,7 +185,7 @@
 }
 .btn-play:hover .play-icon { transform: scale(1.1); background: #AB1017; }
 .btn-play:hover .play-icon::before { transform: translate(-30%, -50%); }
-.btn-play:hover span { color: #AB1017; }
+.btn-play:hover span { color: rgb(var(--c-accent)); }
 
 /* ──────────────────────────────────────────────────────────────────
    Dashboard nav-item — pill-tab pattern (Figma dashboard reference):
@@ -308,6 +333,31 @@
 .about-card-reveal:nth-child(3) { transition-delay: 0.3s; }
 .about-card-reveal:nth-child(4) { transition-delay: 0.4s; }
 
+/* ──────────────────────────────────────────────────────────────────
+   Landing hero art — a soft brand halo behind the student, with the 3D
+   objects floating on their own timing so the scene never moves as one flat
+   image. The halo is theme-aware: rose on light grounds, red glow on dark.
+   ────────────────────────────────────────────────────────────────── */
+.hero-halo {
+  position: absolute;
+  inset: 2% 10% -2%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 188, 188, 0.6), rgba(255, 226, 228, 0.4) 58%, transparent);
+  pointer-events: none;
+}
+.dark .hero-halo {
+  background: radial-gradient(closest-side, rgba(171, 16, 23, 0.5), rgba(124, 17, 26, 0.24) 58%, transparent);
+}
+.hero-float-a { animation: float 6s ease-in-out infinite; }
+.hero-float-b { animation: float 7.5s ease-in-out -2s infinite; }
+.hero-float-c { animation: float 5.2s ease-in-out -1s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-cinematic, .cinematic-float, .glow-btn,
+  .hero-float-a, .hero-float-b, .hero-float-c { animation: none; }
+  .about-card-reveal { opacity: 1; transform: none; transition: none; }
+}
+
 /* RTL overrides */
 [dir="rtl"] { text-align: right; }
 
@@ -387,21 +437,21 @@
   position: fixed; top: 0; right: -100%;
   width: 100%; max-width: 350px; height: 100%;
   background: #ffffff; z-index: 10000;
-  box-shadow: -10px 0 40px rgba(0,0,0,0.1);
   transition: 0.6s cubic-bezier(0.8, 0, 0.2, 1);
   padding: 40px 30px;
   display: flex; flex-direction: column;
 }
-.mobile-nav.active { right: 0; }
+/* The shadow is only set while open: off-canvas, it would bleed in along the edge. */
+.mobile-nav.active { right: 0; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
 @media (max-width: 480px) { .mobile-nav { max-width: 100%; } }
 
 /* ──────────────────────────────────────────────────────────────────
    DARK MODE OVERRIDES for surfaces defined with hardcoded light colors
    above (kept here so the base rules stay untouched).
    ────────────────────────────────────────────────────────────────── */
-.dark .mobile-nav { background: rgb(24 27 34); box-shadow: -10px 0 40px rgba(0,0,0,0.5); }
+.dark .mobile-nav { background: rgb(24 27 34); }
+.dark .mobile-nav.active { box-shadow: -10px 0 40px rgba(0,0,0,0.5); }
 .dark .dashboard-navbar-bottom .dashboard-container { background: rgba(24, 27, 34, 0.95); }
-.dark .faq-answer { background: rgb(26 30 38); }
 .dark .flash-front, .dark .flash-back { background: rgb(26 30 38); color: rgb(233 234 240); }
 .dark .flash-back { color: #e5595b; }
 .dark .answer.correct { background: rgba(16,185,129,0.18) !important; }

@@ -2,32 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EZ Bac - Bac Calculator & Study Platform Algeria</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>EZ Bac - Bac Calculator &amp; Study Platform Algeria</title>
   <meta name="description" content="Calculate your Bac average, practice quizzes, and access study resources for Algerian students. The all-in-one platform for Bac DZ success." />
   <meta name="keywords" content="bac calculator algeria, حساب معدل البكالوريا, bac dz, education algeria, ezbac, study resources algeria" />
   <meta name="author" content="EZ Bac" />
+  <meta name="theme-color" content="#AB1017" />
+
+  <!-- Applies the saved theme and language before first paint, so the page never
+       flashes the wrong mode or direction. Keep the storage keys and defaults in
+       sync with ThemeContext.jsx and LangContext.jsx. -->
+  <script>
+    (function () {
+      var root = document.documentElement
+      var theme = null
+      var lang = null
+      try {
+        theme = localStorage.getItem('ezbac_theme')
+        lang = localStorage.getItem('ezbac_lang')
+      } catch (e) { /* storage unavailable: fall back to the defaults */ }
+
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      if (theme === 'dark' || (theme !== 'light' && prefersDark)) root.classList.add('dark')
+      if (lang === 'fr' || lang === 'ar') root.lang = lang
+      if (lang === 'ar') root.dir = 'rtl'
+
+      // The hero photo is the landing page's largest paint. Fetch it early there
+      // without making every other route download it.
+      if (location.pathname === '/') {
+        var hero = document.createElement('link')
+        hero.rel = 'preload'
+        hero.as = 'image'
+        hero.href = '/assets/images/landing/hero-student.webp'
+        hero.setAttribute('fetchpriority', 'high')
+        document.head.appendChild(hero)
+      }
+    })()
+  </script>
+
+  <!-- Critical styles: the themed page background and a branded boot screen, so
+       the first paint is on-brand before the app's stylesheet and bundle load.
+       The fade-in delay keeps it from flashing on fast connections. -->
+  <style>
+    html { background: #fff; color-scheme: light; }
+    html.dark { background: #0F1116; color-scheme: dark; }
+    body { margin: 0; }
+    .boot {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+      animation: boot-in 0.3s ease 0.25s both;
+    }
+    .boot img { height: 72px; width: auto; animation: boot-breathe 1.8s ease-in-out infinite; }
+    .boot span { display: flex; gap: 5px; }
+    .boot i { width: 6px; height: 6px; border-radius: 50%; background: #AB1017; animation: boot-dot 1.2s ease-in-out infinite; }
+    .boot i:nth-child(2) { animation-delay: 150ms; }
+    .boot i:nth-child(3) { animation-delay: 300ms; }
+    @keyframes boot-in { from { opacity: 0; } }
+    @keyframes boot-breathe { 50% { transform: scale(1.06); } }
+    @keyframes boot-dot { 40% { transform: translateY(-4px); opacity: 1; } 0%, 80%, 100% { opacity: 0.35; } }
+    @media (prefers-reduced-motion: reduce) { .boot img, .boot i { animation: none; } }
+  </style>
+  <noscript><style>.boot { display: none; }</style></noscript>
 
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="EZ Bac" />
   <meta property="og:url" content="https://ez-bac.vercel.app/" />
   <meta property="og:title" content="EZ Bac - Bac Calculator Algeria" />
   <meta property="og:description" content="Calculate your Bac average, practice quizzes, and access study resources for Algerian students." />
-  <meta property="og:image" content="https://ez-bac.vercel.app/ezbac-icon.png" />
+  <meta property="og:image" content="https://ez-bac.vercel.app/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="EZ Bac, your all-in-one mentor for an easier BAC" />
 
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://ez-bac.vercel.app/" />
-  <meta property="twitter:title" content="EZ Bac - Bac Calculator Algeria" />
-  <meta property="twitter:description" content="Calculate your Bac average, practice quizzes, and access study resources for Algerian students." />
-  <meta property="twitter:image" content="https://ez-bac.vercel.app/ezbac-icon.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://ez-bac.vercel.app/" />
+  <meta name="twitter:title" content="EZ Bac - Bac Calculator Algeria" />
+  <meta name="twitter:description" content="Calculate your Bac average, practice quizzes, and access study resources for Algerian students." />
+  <meta name="twitter:image" content="https://ez-bac.vercel.app/og-image.jpg" />
 
-  <link rel="icon" type="image/png" href="/ezbac-icon.png" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "EZ Bac",
+          "url": "https://ez-bac.vercel.app/",
+          "inLanguage": ["ar", "fr", "en"]
+        },
+        {
+          "@type": "EducationalOrganization",
+          "name": "EZ Bac",
+          "url": "https://ez-bac.vercel.app/",
+          "logo": "https://ez-bac.vercel.app/ezbac-icon.png",
+          "description": "The all-in-one study platform for Algerian Bac students.",
+          "areaServed": { "@type": "Country", "name": "Algeria" }
+        }
+      ]
+    }
+  </script>
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&family=DM+Sans:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Tajawal carries the Arabic glyphs: Poppins and DM Sans have none. -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <div id="root"></div>
+  <!-- React replaces the boot screen as soon as the app mounts. -->
+  <div id="root">
+    <div class="boot" aria-hidden="true">
+      <img src="/assets/images/logo.svg" alt="" />
+      <span><i></i><i></i><i></i></span>
+    </div>
+  </div>
+  <noscript>
+    <p style="max-width: 32rem; margin: 20vh auto; padding: 0 24px; text-align: center; font-family: system-ui, sans-serif;">
+      EZ Bac needs JavaScript to run. Please enable it in your browser to start studying.
+    </p>
+  </noscript>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

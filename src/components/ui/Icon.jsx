@@ -27,6 +27,7 @@ const PATHS = {
   lock: <><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>,
   graduation: <><path d="M2 9 12 4l10 5-10 5z" /><path d="M6 11.5V17c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5.5" /><path d="M20.5 10v6" /></>,
   plus: <><path d="M12 4.5v15M4.5 12h15" /></>,
+  check: <><path d="m5 12.5 4.5 4.5L19 7.5" /></>,
   chevronRight: <><path d="m9 5 7 7-7 7" /></>,
   arrowLeft: <><path d="M19 12H5M11 6l-6 6 6 6" /></>,
   clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" /></>,

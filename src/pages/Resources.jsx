@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import DashboardNavbar from '../components/DashboardNavbar.jsx'
 import FavoriteButton from '../components/FavoriteButton.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -13,9 +14,11 @@ import Icon from '../components/ui/Icon.jsx'
 export default function Resources() {
   const { stream } = useAuth()
   const { t, dir } = useLang()
+  const [params] = useSearchParams()
   const [resources, setResources] = useState([])
   const [activeSubject, setActiveSubject] = useState('all')
-  const [search, setSearch] = useState('')
+  // Seeded from ?q= so the landing page's search bar lands on its results.
+  const [search, setSearch] = useState(() => params.get('q') || '')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 

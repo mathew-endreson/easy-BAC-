@@ -31,13 +31,13 @@ export default function LandingNavbar() {
           <div className="flex items-center gap-[140px] max-md:gap-5">
             <div className="logo">
               <Link to="/">
-                <img src="/assets/images/logo.svg" alt="EZ Bac Logo" loading="lazy" className="h-[100px] max-md:h-[55px] w-auto block" />
+                <img src="/assets/images/logo.svg" alt="EZ Bac Logo" className="h-[100px] max-md:h-[55px] w-auto block" />
               </Link>
             </div>
             <div className="flex gap-8 max-md:hidden">
-              <Link to="/" className="no-underline font-semibold text-lg text-primary">{t('home')}</Link>
-              <Link to="/courses" className="no-underline text-ink font-medium hover:text-primary">{t('courses')}</Link>
-              <a href="#faq" className="no-underline text-ink font-medium hover:text-primary">{t('faq')}</a>
+              <Link to="/" className="no-underline font-semibold text-accent">{t('home')}</Link>
+              <Link to="/courses" className="no-underline text-ink font-medium hover:text-accent">{t('courses')}</Link>
+              <a href="#faq" className="no-underline text-ink font-medium hover:text-accent">{t('faq')}</a>
             </div>
           </div>
 
@@ -82,12 +82,12 @@ export default function LandingNavbar() {
           </button>
         </div>
         <div className="flex-1 flex flex-col gap-7">
-          <Link to="/" onClick={() => setMobileOpen(false)} className="no-underline text-2xl font-bold text-primary">{t('home')}</Link>
+          <Link to="/" onClick={() => setMobileOpen(false)} className="no-underline text-2xl font-bold text-accent">{t('home')}</Link>
           <Link to="/courses" onClick={() => setMobileOpen(false)} className="no-underline text-2xl font-bold text-ink">{t('courses')}</Link>
           <a href="#faq" onClick={() => setMobileOpen(false)} className="no-underline text-2xl font-bold text-ink">{t('faq')}</a>
           <div className="mt-auto pt-8">
             <Link
-              to="/library"
+              to="/register"
               onClick={() => setMobileOpen(false)}
               className="inline-block bg-primary text-white px-8 py-4 rounded-pill no-underline font-medium"
             >

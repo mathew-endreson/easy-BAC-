@@ -22,6 +22,9 @@ export default {
         'primary-accent': '#CE2026',
         'primary-glow': '#FFBCBC',
         'primary-rose': '#B07076',
+        // `accent` = the brand red for TEXT: primary on light grounds, lifted on
+        // dark ones where primary itself falls below readable contrast.
+        accent: withVar('--c-accent'),
         ink: withVar('--c-ink'),
         'ink-muted': withVar('--c-ink-muted'),
         'border-soft': withVar('--c-border-soft'),
@@ -39,8 +42,10 @@ export default {
         'footer-text': '#B7B7B7'
       },
       fontFamily: {
-        body: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        // Tajawal sits behind the Latin faces, so Arabic text falls through to it
+        // glyph by glyph while Latin keeps Poppins / DM Sans.
+        body: ['Poppins', 'Tajawal', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['"DM Sans"', 'Tajawal', 'system-ui', '-apple-system', 'sans-serif'],
         outfit: ['Outfit', 'system-ui', 'sans-serif']
       },
       fontSize: {

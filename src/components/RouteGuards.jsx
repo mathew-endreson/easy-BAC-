@@ -83,7 +83,8 @@ export function RedirectIfAuthed({ children }) {
   if (isAuthenticated) {
     if (isSuperAdmin) return <Navigate to="/admin" replace />
     if (!profileComplete) return <Navigate to="/onboarding" replace />
-    const dest = location.state?.from?.pathname || '/library'
+    const from = location.state?.from
+    const dest = from ? `${from.pathname}${from.search || ''}` : '/library'
     return <Navigate to={dest} replace />
   }
   return children

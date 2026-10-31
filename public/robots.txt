@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ez-bac.vercel.app/sitemap.xml
+Sitemap: https://ez-bac.com/sitemap.xml

@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ez-bac.vercel.app/</loc>
+    <loc>https://ez-bac.com/</loc>
     <lastmod>2026-04-16</lastmod>
     <priority>1.00</priority>
   </url>
   <url>
-    <loc>https://ez-bac.vercel.app/home</loc>
+    <loc>https://ez-bac.com/home</loc>
     <lastmod>2026-04-16</lastmod>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://ez-bac.vercel.app/calculator</loc>
+    <loc>https://ez-bac.com/calculator</loc>
     <lastmod>2026-04-16</lastmod>
     <priority>0.90</priority>
   </url>
   <url>
-    <loc>https://ez-bac.vercel.app/quiz</loc>
+    <loc>https://ez-bac.com/quiz</loc>
     <lastmod>2026-04-16</lastmod>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://ez-bac.vercel.app/flashcard</loc>
+    <loc>https://ez-bac.com/flashcard</loc>
     <lastmod>2026-04-16</lastmod>
     <priority>0.70</priority>
   </url>
   <url>
-    <loc>https://ez-bac.vercel.app/courses</loc>
+    <loc>https://ez-bac.com/courses</loc>
     <lastmod>2026-04-16</lastmod>
     <priority>0.70</priority>
   </url>
   <url>
-    <loc>https://ez-bac.vercel.app/library</loc>
+    <loc>https://ez-bac.com/library</loc>
     <lastmod>2026-04-16</lastmod>
     <priority>0.70</priority>
   </url>
